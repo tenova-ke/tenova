@@ -12,8 +12,6 @@ export default function DashboardPage() {
       {/* Main Content */}
       <main className="flex-1 p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
         <SystemInfoCard />
-        <ScraperCard />
-        <CodePlaygroundCard />
         <AudioCard />
       </main>
     </div>
