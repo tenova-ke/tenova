@@ -1,8 +1,11 @@
-export default function Home() {
+export default function Navbar() {
   return (
-    <section className="flex flex-col items-center justify-center py-20">
-      <h1 className="text-4xl font-bold text-primary">🚀 Tenova Foundation Ready</h1>
-      <p className="mt-4 text-lg text-accent">Your clean Next.js 14 + TS + Tailwind setup is live.</p>
-    </section>
+    <nav className="flex items-center justify-between px-6 py-4 bg-card shadow-md">
+      <h1 className="text-xl font-bold text-primary">Tenova</h1>
+      <ul className="flex gap-6 text-text">
+        <li><a href="/">Home</a></li>
+        <li><a href="/about">About</a></li>
+      </ul>
+    </nav>
   );
 }
