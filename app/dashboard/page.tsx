@@ -1,8 +1,6 @@
 // app/dashboard/page.tsx
 import Sidebar from "@/components/Sidebar";
-import SystemInfoCard from "@/components/SystemInfoCard";
-import ScraperCard from "@/components/ScraperCard";
-import CodePlaygroundCard from "@/components/CodePlaygroundCard";
+import SystemInfoCard from "@/components/SystemInfoCard"
 import AudioCard from "@/components/AudioCard";
 
 export default function DashboardPage() {
