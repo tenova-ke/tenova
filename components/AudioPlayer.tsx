@@ -1,49 +1,47 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
-import { Play, Pause } from "lucide-react";
+import { useEffect, useState } from "react";
+import AudioPlayer from "./AudioPlayer";
+import { Music } from "lucide-react";
 
-interface AudioPlayerProps {
-  url?: string; // ✅ optional so it works even if no prop is passed
+interface StreamResponse {
+  status: string;
+  message: string;
+  url: string;
 }
 
-export default function AudioPlayer({ url }: AudioPlayerProps) {
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [isPlaying, setIsPlaying] = useState(true);
+export default function MusicCard() {
+  const [songUrl, setSongUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.play().catch((err) => {
-        console.warn("Autoplay blocked:", err.message);
-        setIsPlaying(false);
-      });
+    async function fetchSong() {
+      try {
+        const res = await fetch("https://tevona-api.onrender.com/api/stream");
+        const data: StreamResponse = await res.json();
+        setSongUrl(data.url);
+      } catch (err) {
+        console.error("❌ Failed to fetch song:", err);
+      } finally {
+        setLoading(false);
+      }
     }
-  }, [url]); // ✅ re-run when url changes
-
-  const togglePlay = () => {
-    if (!audioRef.current) return;
-    if (isPlaying) {
-      audioRef.current.pause();
-      setIsPlaying(false);
-    } else {
-      audioRef.current.play();
-      setIsPlaying(true);
-    }
-  };
+    fetchSong();
+  }, []);
 
   return (
-    <div className="p-4 flex flex-col items-center gap-3 border rounded-xl bg-card shadow-md">
-      <audio
-        ref={audioRef}
-        src={url || "/api/stream"} // ✅ use passed url OR fallback
-        autoPlay
-      />
-      <button
-        onClick={togglePlay}
-        className="px-4 py-2 flex items-center gap-2 bg-blue-600 text-white rounded-xl hover:bg-blue-500 transition"
-      >
-        {isPlaying ? <Pause size={18} /> : <Play size={18} />}
-        {isPlaying ? "Pause" : "Play"}
-      </button>
+    <div className="p-6 rounded-2xl bg-white shadow-lg flex flex-col items-center gap-4 w-full max-w-md">
+      <div className="flex items-center gap-2 text-blue-600 text-xl font-semibold">
+        <Music size={22} />
+        <span>Now Playing</span>
+      </div>
+
+      {loading ? (
+        <p className="text-gray-500">Loading song...</p>
+      ) : songUrl ? (
+        <AudioPlayer url={songUrl} />
+      ) : (
+        <p className="text-red-500">⚠️ No song available</p>
+      )}
     </div>
   );
 }
