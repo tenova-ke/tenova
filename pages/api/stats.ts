@@ -10,9 +10,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     let ip = "unknown";
     try {
-      ip = await publicIp(); // ✅ try to fetch
+      ip = await publicIp.v4(); // ✅ correct method
     } catch (e) {
-      // fallback if Render blocks public-ip
+      // fallback if Render blocks IP lookup
       ip = (req.headers["x-forwarded-for"] || "unknown").toString();
     }
 
@@ -32,4 +32,4 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.error(err);
     res.status(500).json({ error: "Failed to fetch stats" });
   }
-}
+      }
