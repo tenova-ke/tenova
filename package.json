@@ -26,7 +26,8 @@
     "react-dom": "18.3.1",
     "systeminformation": "^5.23.5",
     "tailwind-variants": "^0.2.0",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "framer-motion": "^11.0.0"
   },
   "optionalDependencies": {
     "osx-temperature-sensor": "^1.0.7"
