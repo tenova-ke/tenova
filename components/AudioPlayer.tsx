@@ -2,18 +2,22 @@
 import { useEffect, useRef, useState } from "react";
 import { Play, Pause } from "lucide-react";
 
-export default function AudioPlayer() {
+interface AudioPlayerProps {
+  url?: string; // ✅ optional so it works even if no prop is passed
+}
+
+export default function AudioPlayer({ url }: AudioPlayerProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [isPlaying, setIsPlaying] = useState(true); // autoplay enabled
+  const [isPlaying, setIsPlaying] = useState(true);
 
   useEffect(() => {
     if (audioRef.current) {
       audioRef.current.play().catch((err) => {
-        console.warn("Autoplay blocked by browser:", err.message);
-        setIsPlaying(false); // fallback: user clicks play
+        console.warn("Autoplay blocked:", err.message);
+        setIsPlaying(false);
       });
     }
-  }, []);
+  }, [url]); // ✅ re-run when url changes
 
   const togglePlay = () => {
     if (!audioRef.current) return;
@@ -30,7 +34,7 @@ export default function AudioPlayer() {
     <div className="p-4 flex flex-col items-center gap-3 border rounded-xl bg-card shadow-md">
       <audio
         ref={audioRef}
-        src="/api/stream" // 🔗 this should point to your backend stream route
+        src={url || "/api/stream"} // ✅ use passed url OR fallback
         autoPlay
       />
       <button
@@ -42,4 +46,4 @@ export default function AudioPlayer() {
       </button>
     </div>
   );
-            }
+}
