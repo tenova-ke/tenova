@@ -1,14 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  eslint: {
-    ignoreDuringBuilds: true, // ✅ disables lint blocking deploy
-  },
-};
+  reactStrictMode: true,   // keep what you already had
 
-export default nextConfig;
-
-/** @type {import('next').NextConfig} */
-const nextConfig = {
   webpack: (config) => {
     config.resolve.fallback = {
       ...config.resolve.fallback,
