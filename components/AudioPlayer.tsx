@@ -1,4 +1,4 @@
-export default function AudioCard() {
+export default function AudioPlayer() {
   return (
     <div className="p-4 bg-slate-800 rounded-xl shadow">
       <h2 className="text-lg font-bold mb-2">Audio Tool</h2>
