@@ -24,7 +24,7 @@ export default function Home() {
       {/* Profile */}
       <div className="flex flex-col items-center">
         <Image
-          src="/view/Logo_Maker_WANGA.png (1).jpg"
+          src="profile/IMG-20250821-WA0021.jpg"
           alt="profile"
           width={100}
           height={100}
