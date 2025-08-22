@@ -1,0 +1,48 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 🎨 Global Theme Variables */
+:root {
+  --background: #000000; /* Black */
+  --foreground: #ffffff; /* White text */
+  --accent-green: #00ff9f; /* Neon green */
+  --accent-purple: #9d00ff; /* Neon purple */
+  --muted-grey: #9ca3af; /* Subtitles */
+  --accent-blue: #00c8ff; /* Optional neon blue for highlights */
+}
+
+/* 🌌 Base Styles */
+body {
+  @apply bg-[var(--background)] text-[var(--foreground)] antialiased;
+}
+
+/* ✨ Glassmorphism Card */
+.glass-card {
+  @apply rounded-2xl border border-white/20 bg-white/5 backdrop-blur-lg shadow-xl;
+}
+
+/* 💡 Accent Texts */
+.text-accent-green {
+  color: var(--accent-green);
+}
+.text-accent-purple {
+  color: var(--accent-purple);
+}
+.text-accent-blue {
+  color: var(--accent-blue);
+}
+.text-muted {
+  color: var(--muted-grey);
+}
+
+/* 🎛️ Accent Backgrounds (for badges, highlights, etc.) */
+.bg-accent-green {
+  background-color: var(--accent-green);
+}
+.bg-accent-purple {
+  background-color: var(--accent-purple);
+}
+.bg-accent-blue {
+  background-color: var(--accent-blue);
+}
