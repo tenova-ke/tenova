@@ -1,35 +1,32 @@
 import type { NextApiRequest, NextApiResponse } from "next";
+import { publicIpv4 } from "public-ip";
 import si from "systeminformation";
-import publicIp from "public-ip";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
-    const uptime = process.uptime();
-    const mem = await si.mem();
-    const cpu = await si.currentLoad();
-
     let ip = "unknown";
     try {
-      ip = await publicIp.v4(); // ✅ correct method
+      ip = await publicIpv4(); // ✅ modern API works with v6.0.1
     } catch (e) {
       // fallback if Render blocks IP lookup
       ip = (req.headers["x-forwarded-for"] || "unknown").toString();
     }
 
-    res.json({
-      runtime: `${Math.floor(uptime / 86400)}d ${Math.floor((uptime % 86400) / 3600)}h ${Math.floor((uptime % 3600) / 60)}m`,
-      ram: {
-        used: (mem.used / 1024 ** 3).toFixed(2),
-        total: (mem.total / 1024 ** 3).toFixed(2),
-      },
-      cpuLoad: cpu.currentLoad.toFixed(2),
+    const cpu = await si.cpu();
+    const mem = await si.mem();
+
+    res.status(200).json({
+      status: "ok",
       ip,
-      status: "Online",
-      response: `${Math.floor(Math.random() * 200) + 200}ms`,
-      refreshed: new Date().toISOString(),
+      cpu: cpu.brand,
+      cores: cpu.cores,
+      memory: {
+        total: mem.total,
+        free: mem.free,
+      },
+      timestamp: new Date().toISOString(),
     });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to fetch stats" });
+  } catch (error: any) {
+    res.status(500).json({ status: "error", message: error.message });
   }
-      }
+}
