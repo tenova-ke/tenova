@@ -1,43 +1,52 @@
-// app/api/ephoto/logo/scrape/route.ts
 import { NextResponse } from "next/server";
+import axios from "axios";
 import * as cheerio from "cheerio";
 
 const BASE_URL = "https://en.ephoto360.com";
+const LOGO_URL = `${BASE_URL}/tags/make-logo-online`;
 
 export async function GET() {
   try {
-    // Load the logo category page
-    const res = await fetch(`${BASE_URL}/logo.html`, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (compatible; TevonaBot/1.0)",
-      },
-    });
-    const html = await res.text();
-    const $ = cheerio.load(html);
+    let results: any[] = [];
+    let page = 1;
+    let hasNext = true;
 
-    const results: { name: string; link: string; thumbnail: string }[] = [];
+    while (hasNext) {
+      const url = page === 1 ? LOGO_URL : `${LOGO_URL}/${page}`;
+      console.log(`Fetching: ${url}`);
 
-    // Grab all logo tools
-    $(".list_effect .item").each((_, el) => {
-      const name = $(el).find("a").attr("title") || "";
-      const link = BASE_URL + ($(el).find("a").attr("href") || "");
-      const thumbnail = $(el).find("img").attr("src") || "";
+      const { data } = await axios.get(url);
+      const $ = cheerio.load(data);
 
-      if (name && link) {
-        results.push({ name, link, thumbnail });
-      }
-    });
+      $(".list_effect > li").each((_, el) => {
+        const title = $(el).find("a h3").text().trim();
+        const href = $(el).find("a").attr("href");
+        const thumbnail = $(el).find("img").attr("src");
+
+        if (href && title) {
+          results.push({
+            title,
+            url: BASE_URL + href,
+            thumbnail: thumbnail?.startsWith("http")
+              ? thumbnail
+              : BASE_URL + thumbnail,
+          });
+        }
+      });
+
+      // Detect "next page"
+      const nextLink = $(".pagination .next").length > 0;
+      hasNext = nextLink;
+      page++;
+    }
 
     return NextResponse.json({
       status: 200,
-      success: true,
+      count: results.length,
       tools: results,
     });
   } catch (err: any) {
-    return NextResponse.json({
-      status: 500,
-      error: "Failed to scrape logo tools",
-      details: err.message,
-    });
+    console.error("❌ Error scraping logo tools:", err.message);
+    return NextResponse.json({ status: 500, error: err.message });
   }
-}
+  }
