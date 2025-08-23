@@ -19,9 +19,8 @@ export async function GET(req: Request) {
     const { data } = await axios.get(url);
 
     return NextResponse.json({
-      status: 200,
-      result: data.items.map((item: any) => ({
-        id: item.id.videoId,
+      results: data.items.map((item: any) => ({
+        videoId: item.id.videoId,
         title: item.snippet.title,
         channel: item.snippet.channelTitle,
         publishedAt: item.snippet.publishedAt,
@@ -32,4 +31,4 @@ export async function GET(req: Request) {
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
-}
+    }
