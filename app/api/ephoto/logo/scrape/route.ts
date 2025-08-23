@@ -15,8 +15,17 @@ export async function GET() {
       const url = page === 1 ? LOGO_URL : `${LOGO_URL}/${page}`;
       console.log(`Fetching: ${url}`);
 
-      const { data } = await axios.get(url);
+      const { data } = await axios.get(url, {
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115 Safari/537.36",
+        },
+      });
+
       const $ = cheerio.load(data);
+
+      // Debug: check page title
+      console.log("Page title:", $("title").text());
 
       $(".list_effect > li").each((_, el) => {
         const title = $(el).find("a h3").text().trim();
@@ -34,7 +43,7 @@ export async function GET() {
         }
       });
 
-      // Detect "next page"
+      // Check if "next page" exists
       const nextLink = $(".pagination .next").length > 0;
       hasNext = nextLink;
       page++;
