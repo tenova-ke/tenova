@@ -1,90 +1,159 @@
 // app/api/youtube/download/route.ts
-import type { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
+export const runtime = "nodejs";        // don't use edge for this
+export const dynamic = "force-dynamic"; // no caching, always run server-side
 
-function isAllowedTunnel(u: URL) {
-  // Be strict to avoid open redirects. These tunnel hosts rotate, but all end with yt-dl.click
-  return u.hostname.endsWith("yt-dl.click");
+const GIFTED_BASE = process.env.GIFTED_API_BASE || "https://api.giftedtech.web.id";
+const GIFTED_KEY  = process.env.GIFTED_API_KEY  || "gifted";
+
+// We’ll try a few Gifted endpoints and use the first that returns a direct audio URL
+const ENDPOINTS = [
+  "ytmp3",   // returns { result.download_url }
+  "ytdlv2",  // returns { result.audio_url, result.video_url }
+  "dlmp3",   // returns { result.download_url } (auto server)
+  "yta"      // returns mp3 (varies), we’ll still try to normalize
+];
+
+type GiftedResp = {
+  status?: number;
+  success?: boolean;
+  result?: any;
+};
+
+function normalizeToAudioUrl(endpoint: string, data: GiftedResp) {
+  const r = data?.result || {};
+  // Common shapes
+  const download =
+    r.download_url ||
+    r.audio_url ||
+    r.url || // some variants
+    null;
+
+  if (!download) return null;
+
+  // Best-effort metadata
+  return {
+    endpoint,
+    id: r.id || r.videoId || undefined,
+    title: r.title || undefined,
+    thumbnail: r.thumbnail || r.thumb || undefined,
+    quality:
+      r.quality ||
+      r.audi_quality ||
+      r.audio_quality ||
+      undefined,
+    download_url: download as string,
+    raw: r,
+  };
+}
+
+async function callGifted(endpoint: string, ytUrl: string, signal: AbortSignal) {
+  const qs = new URLSearchParams({
+    apikey: GIFTED_KEY,
+    url: ytUrl,
+  });
+  const url = `${GIFTED_BASE}/api/download/${endpoint}?${qs.toString()}`;
+
+  const res = await fetch(url, {
+    method: "GET",
+    // a few providers are picky about UA; send a reasonable one
+    headers: { "User-Agent": "Mozilla/5.0 (TevonaDownloader/1.0)" },
+    cache: "no-store",
+    signal,
+  });
+
+  if (!res.ok) {
+    // Try next endpoint
+    throw new Error(`Gifted ${endpoint} HTTP ${res.status}`);
+  }
+
+  const json = (await res.json()) as GiftedResp;
+  if (!json?.success) {
+    throw new Error(`Gifted ${endpoint} responded success=false`);
+  }
+
+  const norm = normalizeToAudioUrl(endpoint, json);
+  if (!norm?.download_url) {
+    throw new Error(`Gifted ${endpoint} returned no audio url`);
+  }
+  return norm;
+}
+
+function toYoutubeUrl(urlOrId: string) {
+  // if they passed a bare video id, make a full URL
+  if (/^[a-zA-Z0-9_-]{6,20}$/.test(urlOrId) && !/^https?:\/\//.test(urlOrId)) {
+    return `https://youtu.be/${urlOrId}`;
+  }
+  return urlOrId;
 }
 
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-    const raw = searchParams.get("url");
-    const file = (searchParams.get("filename") || "audio.mp3").replace(/[^\w.\- ]+/g, "_");
-    const streamMode = searchParams.get("stream");
-
-    if (!raw) {
-      return new Response(JSON.stringify({ error: "Missing url" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
+    const input = (searchParams.get("url") || searchParams.get("id") || "").trim();
+    if (!input) {
+      return NextResponse.json({ error: "Missing ?url= or ?id=" }, { status: 400 });
     }
 
-    let target: URL;
-    try {
-      target = new URL(raw);
-    } catch {
-      return new Response(JSON.stringify({ error: "Invalid url" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
+    const ytUrl = toYoutubeUrl(input);
+    const redirect = searchParams.get("redirect"); // if present -> 302 to file
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 20_000);
+
+    let best: Awaited<ReturnType<typeof callGifted>> | null = null;
+    let lastErr: unknown = null;
+
+    // Try endpoints in order
+    for (const ep of ENDPOINTS) {
+      try {
+        best = await callGifted(ep, ytUrl, controller.signal);
+        if (best) break;
+      } catch (e) {
+        lastErr = e;
+        // continue to next
+      }
     }
 
-    if (!isAllowedTunnel(target)) {
-      return new Response(JSON.stringify({ error: "Host not allowed" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
+    clearTimeout(timer);
+
+    if (!best) {
+      return NextResponse.json(
+        { error: "No working downloader endpoint", details: String(lastErr || "unknown") },
+        { status: 502 }
+      );
     }
 
-    // OPTION A (default): 302 redirect to the tunnel link (best for large files, avoids CORS/fetch issues)
-    if (!streamMode) {
-      // Do NOT use POST from the client; use a normal <a href> or window.location to this GET route.
+    // If ?redirect=1 (or any truthy), send a 302 straight to the file CDN
+    if (redirect) {
       return new Response(null, {
         status: 302,
         headers: {
-          Location: target.toString(),
+          Location: best.download_url,
           "Cache-Control": "no-store",
         },
       });
     }
 
-    // OPTION B: stream through our server as an attachment (?stream=1)
-    const upstream = await fetch(target.toString(), {
-      // never cache (links are short-lived)
-      cache: "no-store",
-      // some tunnel hosts require a reasonable UA
-      headers: { "User-Agent": "Mozilla/5.0" },
-    });
-
-    if (!upstream.ok || !upstream.body) {
-      return new Response(JSON.stringify({ error: "Upstream failed", status: upstream.status }), {
-        status: 502,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    const contentType = upstream.headers.get("content-type") || "audio/mpeg";
-    // stream body directly to client
-    return new Response(upstream.body, {
-      status: 200,
-      headers: {
-        "Content-Type": contentType,
-        "Content-Disposition": `attachment; filename="${file}"`,
-        "Cache-Control": "no-store",
-        // pass through length if present (not required)
-        ...(upstream.headers.get("content-length")
-          ? { "Content-Length": upstream.headers.get("content-length")! }
-          : {}),
+    // Otherwise return JSON (frontend can decide what to do)
+    return NextResponse.json(
+      {
+        status: 200,
+        success: true,
+        provider: "gifted",
+        endpoint: best.endpoint,
+        result: {
+          id: best.id,
+          title: best.title,
+          thumbnail: best.thumbnail,
+          quality: best.quality,
+          download_url: best.download_url,
+        },
       },
-    });
-  } catch (e: any) {
-    return new Response(JSON.stringify({ error: e?.message || "Unexpected error" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+      { status: 200 }
+    );
+  } catch (err: any) {
+    const msg = typeof err?.message === "string" ? err.message : "Unexpected error";
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
-                         }
+}
