@@ -21,7 +21,7 @@ export default function Navbar() {
             border-4 border-transparent bg-clip-border 
             animate-spin-slow bg-gradient-to-tr from-pink-500 via-yellow-400 to-blue-500 shadow-xl">
             <Image
-              src="/profile/tevona.jpg"
+              src="/public/view/tevona.jpg"
               alt="Profile"
               fill
               className="object-cover rounded-full"
