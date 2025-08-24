@@ -94,13 +94,13 @@ export default function MusicPage() {
       {/* Results */}
       {loading && <p className="text-center text-gray-400">Loading songs...</p>}
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="max-w-6xl mx-auto px-4 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {songs.map((song, idx) => (
           <motion.div
             key={song.videoId}
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`rounded-xl p-4 bg-black/50 border border-white/10 shadow-lg backdrop-blur-md`}
+            className="rounded-xl p-4 bg-black/70 border border-white/20 shadow-xl backdrop-blur-md"
           >
             <div className="relative w-full h-40 rounded-lg overflow-hidden mb-3">
               {song.thumbnail && (
@@ -119,14 +119,14 @@ export default function MusicPage() {
             <div className="flex gap-3 mt-4">
               <button
                 onClick={() => playSong(idx)}
-                className="flex-1 px-3 py-2 rounded-lg bg-pink-600 hover:bg-pink-700"
+                className="flex-1 px-3 py-2 rounded-lg bg-pink-600 hover:bg-pink-700 transition"
               >
                 <Play size={18} /> Play
               </button>
               <button
                 onClick={() => downloadSong(song.videoId)}
                 disabled={downloading === song.videoId}
-                className="flex-1 px-3 py-2 rounded-lg bg-green-600 hover:bg-green-700 disabled:opacity-50"
+                className="flex-1 px-3 py-2 rounded-lg bg-green-600 hover:bg-green-700 disabled:opacity-50 transition"
               >
                 {downloading === song.videoId ? (
                   <Loader2 size={18} className="animate-spin" />
@@ -155,7 +155,7 @@ export default function MusicPage() {
         <motion.div
           initial={{ y: 200 }}
           animate={{ y: 0 }}
-          className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[90%] md:w-1/2 bg-black/80 backdrop-blur-lg p-4 rounded-2xl border border-white/20 shadow-xl"
+          className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[90%] md:w-1/2 bg-black/90 backdrop-blur-lg p-4 rounded-2xl border border-white/20 shadow-xl"
         >
           <h3 className="font-bold text-lg truncate mb-2">{songs[current]?.title}</h3>
           <div className="flex gap-4 justify-center">
@@ -185,4 +185,4 @@ export default function MusicPage() {
       )}
     </main>
   );
-        }
+}
