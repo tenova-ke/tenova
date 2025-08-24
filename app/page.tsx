@@ -59,21 +59,25 @@ export default function HomePage() {
       <section className="py-12 px-6">
         <h2 className="text-2xl font-bold mb-6 text-center text-blue-400">🔥 Community Highlights</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {slides.map((img, idx) => (
+          {slides.map((slide, idx) => (
             <motion.div
               key={idx}
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: idx * 0.1 }}
-              className="rounded-xl overflow-hidden shadow-lg hover:scale-105 transition"
+              className="rounded-xl overflow-hidden shadow-lg hover:scale-105 transition bg-black/30 backdrop-blur-lg"
             >
               <Image
-                src={img}
+                src={slide.image}
                 alt={`slide-${idx}`}
                 width={400}
                 height={300}
                 className="object-cover w-full h-48"
               />
+              <div className="p-3 text-center">
+                <h3 className="text-lg font-semibold text-yellow-300">{slide.title}</h3>
+                <p className="text-sm text-gray-300">{slide.subtitle}</p>
+              </div>
             </motion.div>
           ))}
         </div>
@@ -93,4 +97,4 @@ export default function HomePage() {
       </section>
     </main>
   );
-      }
+  }
