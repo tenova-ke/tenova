@@ -8,6 +8,8 @@ html, body {
   scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;   /* 🚫 Prevent horizontal scroll */
+  max-width: 100vw;     /* 🚫 Force content inside screen */
 }
 
 /* 🎨 Accent Colors (custom props) */
