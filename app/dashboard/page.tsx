@@ -1,100 +1,73 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import axios from "axios";
-import { Cpu, Server, Gauge, HardDrive } from "lucide-react";
+import Image from "next/image";
+import { Menu } from "lucide-react";
+import { useState } from "react";
 
-interface Stats {
-  status: string;
-  ip: string;
-  cpu: string;
-  cores: number;
-  memory: {
-    total: number;
-    free: number;
-  };
-  timestamp: string;
-}
-
-export default function DashboardPage() {
-  const [stats, setStats] = useState<Stats | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const res = await axios.get("/api/stats");
-        setStats(res.data);
-      } catch (err) {
-        console.error("Error fetching stats:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchStats();
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-screen text-xl font-semibold text-slate-200">
-        Loading system stats...
-      </div>
-    );
-  }
-
-  if (!stats) {
-    return (
-      <div className="flex justify-center items-center h-screen text-red-400 font-semibold">
-        Failed to load stats ❌
-      </div>
-    );
-  }
-
-  // Card wrapper helper
-  const Card = ({ children }: { children: React.ReactNode }) => (
-    <div className="backdrop-blur-lg bg-white/10 border border-white/20 shadow-xl rounded-2xl">
-      <div className="p-6 flex flex-col items-center">{children}</div>
-    </div>
-  );
+export default function Navbar() {
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-slate-100 p-8">
-      <h1 className="text-3xl font-bold mb-6 text-center">📊 System Dashboard</h1>
+    <>
+      {/* Top Navbar */}
+      <nav className="fixed top-0 left-0 w-full z-50 px-6 py-3 flex items-center justify-between 
+        bg-gradient-to-r from-purple-900/90 via-black/80 to-purple-950/90 
+        backdrop-blur-xl shadow-lg border-b border-purple-700/40">
+        
+        {/* Left: Profile + Logo */}
+        <div className="flex items-center gap-4">
+          {/* Profile Avatar with Neon Ring */}
+          <div className="relative w-14 h-14 rounded-full overflow-hidden 
+            border-4 border-transparent bg-clip-border 
+            animate-spin-slow bg-gradient-to-tr from-pink-500 via-yellow-400 to-blue-500 shadow-xl">
+            <Image
+              src="/public/view/tevona.jpg"
+              alt="Profile"
+              fill
+              className="object-cover rounded-full"
+            />
+          </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <Card>
-          <Server className="w-10 h-10 text-teal-400 mb-3" />
-          <h2 className="text-lg font-semibold">Public IP</h2>
-          <p className="text-xl mt-2">{stats.ip}</p>
-        </Card>
-
-        <Card>
-          <Cpu className="w-10 h-10 text-green-400 mb-3" />
-          <h2 className="text-lg font-semibold">CPU</h2>
-          <p className="text-sm mt-2">{stats.cpu}</p>
-          <p className="text-sm text-slate-400">{stats.cores} Cores</p>
-        </Card>
-
-        <Card>
-          <HardDrive className="w-10 h-10 text-blue-400 mb-3" />
-          <h2 className="text-lg font-semibold">Memory</h2>
-          <p className="mt-2">
-            {(stats.memory.free / 1024 / 1024 / 1024).toFixed(2)} GB free
-          </p>
-          <p className="text-sm text-slate-400">
-            of {(stats.memory.total / 1024 / 1024 / 1024).toFixed(2)} GB
-          </p>
-        </Card>
-
-        <div className="md:col-span-2">
-          <Card>
-            <Gauge className="w-10 h-10 text-yellow-400 mb-3" />
-            <h2 className="text-lg font-semibold">Last Updated</h2>
-            <p className="mt-2">{new Date(stats.timestamp).toLocaleString()}</p>
-          </Card>
+          {/* Logo Text */}
+          <div className="flex flex-col">
+            <h1 className="text-2xl font-extrabold tracking-wider 
+              bg-gradient-to-r from-pink-500 via-yellow-400 to-blue-400 
+              bg-clip-text text-transparent drop-shadow-lg">
+              TEVONA
+            </h1>
+            <span className="text-sm text-purple-300 font-medium tracking-wide">
+              Next-Gen Intelligence Hub
+            </span>
+          </div>
         </div>
-      </div>
-    </div>
+
+        {/* Right: Hamburger Menu */}
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="p-2 rounded-md bg-white/10 hover:bg-white/20 
+            border border-white/20 text-white transition"
+        >
+          <Menu size={24} />
+        </button>
+      </nav>
+
+      {/* Sidebar (slide-in) */}
+      {isOpen && (
+        <div className="fixed top-0 right-0 w-64 h-full z-40 
+          bg-gradient-to-b from-purple-950/95 via-black/90 to-purple-900/95 
+          shadow-2xl border-l border-purple-700/40 p-6 
+          animate-slide-in">
+          <h2 className="text-lg font-bold text-white mb-6">Menu</h2>
+          <ul className="space-y-4">
+            <li className="hover:text-pink-400 transition cursor-pointer">Home</li>
+            <li className="hover:text-green-400 transition cursor-pointer">Downloads</li>
+            <li className="hover:text-blue-400 transition cursor-pointer">AI Tools</li>
+            <li className="hover:text-yellow-400 transition cursor-pointer">Community</li>
+            <li className="hover:text-purple-400 transition cursor-pointer">About</li>
+          </ul>
+        </div>
+      )}
+    </>
   );
-}
+      }
+        
