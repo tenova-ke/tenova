@@ -1,80 +1,96 @@
-import Image from "next/image";
+"use client";
+
 import Slideshow from "@/components/Slideshow";
+import MotivationGrid from "@/components/MotivationGrid";
+import slides from "@/lib/slides";
+import Image from "next/image";
+import { motion } from "framer-motion";
+import Link from "next/link";
 
-export default function Home() {
-  const features = [
-    { title: "Quick Song Downloads", desc: "Download MP3s in seconds." },
-    { title: "Quick Video Downloads", desc: "MP4s in HD instantly." },
-    { title: "APK Downloader", desc: "Grab Android apps with ease." },
-    { title: "Stream Music", desc: "Play music directly online." },
-    { title: "Stream Videos", desc: "Watch videos without ads." },
-    { title: "Text → PDF", desc: "Convert notes into clean PDFs." },
-    { title: "Encrypt / Decrypt", desc: "Protect & unlock your files." },
-    { title: "Image Generator", desc: "AI-powered artwork instantly." },
-    { title: "Logo Creator", desc: "Generate custom brand logos." },
-    { title: "AI Chatbot", desc: "Talk with AI assistants." },
-    { title: "Ephoto360", desc: "Fun image effects & text art." },
-    { title: "Code Playground", desc: "Run & share code online." },
-    { title: "Fancy Texts", desc: "Stylish fonts for socials." },
-    { title: "More Tools...", desc: "Expanding every update 🚀" },
-  ];
-
+export default function HomePage() {
   return (
-    <main className="flex flex-col items-center gap-10 px-6 py-12">
-      {/* Profile */}
-      <div className="flex flex-col items-center">
-        <Image
-          src="profile/IMG-20250821-WA0021.jpg"
-          alt="profile"
-          width={100}
-          height={100}
-          className="rounded-full shadow-md"
-        />
-        <h1 className="text-2xl font-bold mt-3">Tevona v2</h1>
-        <p className="text-gray-400">Powered by Wanga • Inspired by Tracker & Gifted Tech</p>
-      </div>
+    <main className="min-h-screen bg-gradient-to-br from-[#0f0c29] via-[#302b63] to-[#24243e] text-white">
+      {/* Hero Section */}
+      <section className="relative flex flex-col items-center justify-center pt-28 pb-16 text-center px-6">
+        <Slideshow />
 
-      {/* Button */}
-      <a
-        href="/dashboard"
-        className="bg-gradient-to-r from-blue-500 to-cyan-400 text-white text-lg font-semibold px-10 py-3 rounded-full shadow-lg hover:scale-105 transition"
-      >
-        Visit Dashboard
-      </a>
+        {/* Title + Explore Button */}
+        <motion.h1
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          className="text-4xl md:text-6xl font-extrabold mt-10 bg-clip-text text-transparent bg-gradient-to-r from-pink-400 via-yellow-400 to-blue-400"
+        >
+          Welcome to Tevona Hub
+        </motion.h1>
 
-      {/* Slideshow */}
-      <Slideshow />
+        <p className="mt-4 text-lg text-gray-300">
+          Explore tools like Image Generator, Text to PDF, Music & Video Downloads, Ephoto Effects and more
+        </p>
 
-      {/* Cards */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-10 max-w-5xl w-full">
-        {features.map((f, idx) => (
-          <div
-            key={idx}
-            className="p-5 rounded-2xl backdrop-blur-lg bg-white/10 border border-white/20 shadow-lg hover:scale-105 transition"
+        <Link href="/dashboard">
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.95 }}
+            className="mt-6 px-8 py-4 bg-gradient-to-r from-pink-500 via-yellow-400 to-blue-500 
+              text-black font-bold rounded-full shadow-lg hover:shadow-neon transition"
           >
-            <h3 className="font-semibold text-lg text-white">{f.title}</h3>
-            <p className="text-gray-300 text-sm mt-2">{f.desc}</p>
-          </div>
-        ))}
+            🚀 Explore Dashboard
+          </motion.button>
+        </Link>
       </section>
 
-      {/* Thanks Section */}
-      <div className="text-center max-w-3xl mt-10">
-        <h2 className="text-xl font-bold text-white">Big Thanks 🙏</h2>
-        <p className="text-gray-300 mt-2">
-          Special thanks to Gifted Tech, Creepy, and Tracker Engines for inspiring this journey.
-          Tevona is open for your ideas — let’s build together!
+      {/* Advertise Section */}
+      <section className="py-12 px-6 text-center bg-black/20 backdrop-blur-lg">
+        <motion.h2
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="text-3xl font-bold text-yellow-400"
+        >
+          Advertise With Us
+        </motion.h2>
+        <p className="mt-4 text-gray-300">
+          Post your banners and business with us. Contact <span className="text-pink-400">Wanga</span> to get started.
         </p>
-      </div>
+      </section>
 
-      {/* WhatsApp Button */}
-      <a
-        href="https://wa.me/254758476795"
-        target="_blank"
-        className="mt-6 bg-green-500 text-white px-8 py-3 rounded-full shadow-lg hover:bg-green-600 transition"
-      >
-        Chat with Wanga on WhatsApp
-      </a>
+      {/* Showcase Slides */}
+      <section className="py-12 px-6">
+        <h2 className="text-2xl font-bold mb-6 text-center text-blue-400">🔥 Community Highlights</h2>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {slides.map((img, idx) => (
+            <motion.div
+              key={idx}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: idx * 0.1 }}
+              className="rounded-xl overflow-hidden shadow-lg hover:scale-105 transition"
+            >
+              <Image
+                src={img}
+                alt={`slide-${idx}`}
+                width={400}
+                height={300}
+                className="object-cover w-full h-48"
+              />
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      {/* Motivation Stats */}
+      <section className="py-16">
+        <motion.h2
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          className="text-3xl font-bold text-center text-green-400 mb-10"
+        >
+          📊 Tevona Motivation Numbers
+        </motion.h2>
+        <MotivationGrid />
+      </section>
     </main>
   );
-  }
+      }
