@@ -1,85 +1,72 @@
 "use client";
 
+import Image from "next/image";
+import { Menu } from "lucide-react";
 import { useState } from "react";
-import { Menu, X } from "lucide-react";
-import Link from "next/link";
 
 export default function Navbar() {
-  const [open, setOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <nav className="fixed top-0 left-0 w-full z-50 bg-white/10 backdrop-blur-md border-b border-white/20 px-6 py-3 flex items-center justify-between shadow-lg">
-      {/* Logo */}
-      <div className="flex items-center gap-2">
-        <Link href="/" className="flex items-center gap-2">
-          {/* Inline SVG Logo */}
-          <svg
-            className="h-10 w-10"
-            viewBox="0 0 400 400"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <defs>
-              <linearGradient id="textGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#FF4D6D" />
-                <stop offset="50%" stopColor="#FF914D" />
-                <stop offset="100%" stopColor="#FACC15" />
-              </linearGradient>
-              <linearGradient id="ringGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#FF4D6D" />
-                <stop offset="50%" stopColor="#FACC15" />
-                <stop offset="100%" stopColor="#60A5FA" />
-              </linearGradient>
-            </defs>
-            <circle
-              cx="200"
-              cy="200"
-              r="180"
-              stroke="url(#ringGradient)"
-              strokeWidth="8"
-              fill="none"
+    <>
+      {/* Top Navbar */}
+      <nav className="fixed top-0 left-0 w-full z-50 px-6 py-3 flex items-center justify-between 
+        bg-gradient-to-r from-purple-900/90 via-black/80 to-purple-950/90 
+        backdrop-blur-xl shadow-lg border-b border-purple-700/40">
+        
+        {/* Left: Profile + Logo */}
+        <div className="flex items-center gap-4">
+          {/* Profile Avatar with Neon Ring */}
+          <div className="relative w-14 h-14 rounded-full overflow-hidden 
+            border-4 border-transparent bg-clip-border 
+            animate-spin-slow bg-gradient-to-tr from-pink-500 via-yellow-400 to-blue-500 shadow-xl">
+            <Image
+              src="/profile/tevona.jpg"
+              alt="Profile"
+              fill
+              className="object-cover rounded-full"
             />
-            <text
-              x="50%"
-              y="55%"
-              textAnchor="middle"
-              fontFamily="Poppins, sans-serif"
-              fontSize="70"
-              fontWeight="800"
-              fill="url(#textGradient)"
-              stroke="#111"
-              strokeWidth="2"
-            >
-              T
-            </text>
-          </svg>
-          <span className="text-lg font-extrabold bg-gradient-to-r from-pink-500 via-yellow-400 to-blue-400 bg-clip-text text-transparent">
-            TEVONA
-          </span>
-        </Link>
-      </div>
+          </div>
 
-      {/* Hamburger */}
-      <button
-        onClick={() => setOpen(!open)}
-        className="p-2 rounded-md hover:bg-white/20 transition"
-      >
-        {open ? <X className="w-6 h-6 text-white" /> : <Menu className="w-6 h-6 text-white" />}
-      </button>
+          {/* Logo Text */}
+          <div className="flex flex-col">
+            <h1 className="text-2xl font-extrabold tracking-wider 
+              bg-gradient-to-r from-pink-500 via-yellow-400 to-blue-400 
+              bg-clip-text text-transparent drop-shadow-lg">
+              TEVONA
+            </h1>
+            <span className="text-sm text-purple-300 font-medium tracking-wide">
+              Next-Gen Intelligence Hub
+            </span>
+          </div>
+        </div>
 
-      {/* Sidebar */}
-      {open && (
-        <div className="fixed top-0 right-0 h-full w-64 bg-white/10 backdrop-blur-md border-l border-white/20 shadow-xl z-50 p-6 flex flex-col gap-6 animate-slideIn">
-          <button onClick={() => setOpen(false)} className="self-end">
-            <X className="w-6 h-6 text-white" />
-          </button>
-          <Link href="/dashboard" className="hover:text-pink-400 transition">Dashboard</Link>
-          <Link href="/spotify" className="hover:text-green-400 transition">Spotify</Link>
-          <Link href="/video" className="hover:text-red-400 transition">Video</Link>
-          <Link href="/apk" className="hover:text-yellow-400 transition">APK</Link>
-          <Link href="/ephoto" className="hover:text-blue-400 transition">Ephoto</Link>
-          <Link href="/ai" className="hover:text-purple-400 transition">AI Assistant</Link>
+        {/* Right: Hamburger Menu */}
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="p-2 rounded-md bg-white/10 hover:bg-white/20 
+            border border-white/20 text-white transition"
+        >
+          <Menu size={24} />
+        </button>
+      </nav>
+
+      {/* Sidebar (slide-in) */}
+      {isOpen && (
+        <div className="fixed top-0 right-0 w-64 h-full z-40 
+          bg-gradient-to-b from-purple-950/95 via-black/90 to-purple-900/95 
+          shadow-2xl border-l border-purple-700/40 p-6 
+          animate-slide-in">
+          <h2 className="text-lg font-bold text-white mb-6">Menu</h2>
+          <ul className="space-y-4">
+            <li className="hover:text-pink-400 transition cursor-pointer">Home</li>
+            <li className="hover:text-green-400 transition cursor-pointer">Downloads</li>
+            <li className="hover:text-blue-400 transition cursor-pointer">AI Tools</li>
+            <li className="hover:text-yellow-400 transition cursor-pointer">Community</li>
+            <li className="hover:text-purple-400 transition cursor-pointer">About</li>
+          </ul>
         </div>
       )}
-    </nav>
+    </>
   );
-          }
+    }
