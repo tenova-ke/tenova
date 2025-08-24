@@ -12,5 +12,15 @@ const nextConfig = {
     return config;
   },
 };
+  },
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "i.ytimg.com",
+        pathname: "/**",
+    ],
+  },
+};
 
-export default nextConfig;
+export default nextConfig
