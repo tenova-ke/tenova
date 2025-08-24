@@ -27,7 +27,16 @@
     "systeminformation": "^5.23.5",
     "tailwind-variants": "^0.2.0",
     "tailwindcss-animate": "^1.0.7",
-    "framer-motion": "^11.0.0"
+    "framer-motion": "^11.0.0",
+    "react-type-animation": "^3.2.0",
+    "@tanstack/react-query": "^5.60.0",
+    "zustand": "^4.5.5",
+    "swr": "^2.2.5",
+    "react-markdown": "^9.0.1",
+    "howler": "^2.2.4",
+    "react-player": "^2.16.0",
+    "huggingface-hub": "^0.23.4",
+    "react-tsparticles": "^2.12.2"
   },
   "optionalDependencies": {
     "osx-temperature-sensor": "^1.0.7"
