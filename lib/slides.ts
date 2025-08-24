@@ -22,27 +22,17 @@ const slides = [
     subtitle: "Turn your text & images into digital art",
   },
   {
-    image: "/view/Pixel_Glitch_WANGA.png.jpg",
-    title: "Pixel Glitch Magic",
-    subtitle: "Retro vibes with a futuristic twist",
-  },
-  {
     image: "/view/Text_Effect_WANGA.png.jpg",
     title: "Stylish Text Effects",
     subtitle: "Design your words in glowing 3D styles",
   },
   {
-    image: "/view/image-19.jpg",
+    image: "/view/image.jpg",
     title: "Explore Creativity",
     subtitle: "Memes • Quotes • Jokes • Fun content daily",
   },
   {
-    image: "/view/image-7.jpg",
-    title: "Community Hub",
-    subtitle: "Share bots, snippets, and templates",
-  },
-  {
-    image: "/view/image.jpg",
+    image: "/view/tevona.jpg",
     title: "Future is Tevona",
     subtitle: "One hub, endless possibilities",
   },
