@@ -1,0 +1,25 @@
+/* Dark background */
+.music-layout {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Floating emojis */
+.icon {
+  position: absolute;
+  font-size: 2rem;
+  opacity: 0.25;
+  animation: floatIcons 15s infinite linear;
+}
+
+@keyframes floatIcons {
+  from {
+    transform: translateY(100vh) rotate(0deg);
+  }
+  to {
+    transform: translateY(-10vh) rotate(360deg);
+  }
+}
