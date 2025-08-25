@@ -2,12 +2,12 @@
 
 import SongCard from "./SongCard";
 
-type SongGridProps = {
+interface SongGridProps {
   songs: any[];
   playSong: (idx: number) => void;
-  downloadSong: (videoId: string, idx: number) => void;
+  downloadSong: (videoId: string, title: string) => void;
   downloading: string | null;
-};
+}
 
 export default function SongGrid({
   songs,
@@ -16,12 +16,12 @@ export default function SongGrid({
   downloading,
 }: SongGridProps) {
   return (
-    <div className="mt-8 max-w-6xl mx-auto grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="max-w-5xl mx-auto grid gap-6 md:grid-cols-2 lg:grid-cols-3">
       {songs.map((song, idx) => (
         <SongCard
           key={song.videoId}
           song={song}
-          idx={idx + 1} // offset because 0 is featured
+          idx={idx}
           playSong={playSong}
           downloadSong={downloadSong}
           downloading={downloading}
