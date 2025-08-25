@@ -16,7 +16,7 @@ export async function GET(req: Request) {
     }
 
     const trackId = match[1];
-    const fabdlUrl = `https://api.giftedtech.web.id/api/download/spotifydl?apikey=gifted&url=https%3A%2F%2Fopen.spotify.com${trackId}`;
+    const fabdlUrl = `https://api.giftedtech.web.id/api/download/spotifydl?apikey=gifted&url=${trackId}`;
 
     const res = await fetch(fabdlUrl);
     if (!res.ok) {
