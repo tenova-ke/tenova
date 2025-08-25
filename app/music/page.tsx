@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
-import { motion } from "framer-motion";
-import { Search, Play, Download, Loader2, SkipForward, Square } from "lucide-react";
+import { Search, Play, Download, Loader2 } from "lucide-react";
+import NowPlaying from "./components/NowPlaying";
 
 export default function MusicPage() {
   const [query, setQuery] = useState("Kenya top hits");
@@ -11,6 +12,7 @@ export default function MusicPage() {
   const [songs, setSongs] = useState<any[]>([]);
   const [current, setCurrent] = useState<number | null>(null);
   const [downloading, setDownloading] = useState<string | null>(null);
+  const [showRelated, setShowRelated] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Auto search on load
@@ -21,6 +23,7 @@ export default function MusicPage() {
   const searchSongs = async (q: string) => {
     setLoading(true);
     setSongs([]);
+    setShowRelated(false);
     try {
       const res = await fetch(`/api/youtube/search?q=${q}`);
       const data = await res.json();
@@ -49,7 +52,7 @@ export default function MusicPage() {
     }
   };
 
-  const downloadSong = async (videoId: string) => {
+  const downloadSong = async (videoId: string, idx: number) => {
     setDownloading(videoId);
     try {
       const res = await fetch(`/api/youtube/download?url=${videoId}`);
@@ -59,6 +62,11 @@ export default function MusicPage() {
       a.href = data.result.download_url;
       a.download = `${data.result.title || "Tevona"} - ${videoId}.mp3`;
       a.click();
+
+      // 🔥 After first download, reveal related smoothly
+      if (idx === 0) {
+        setShowRelated(true);
+      }
     } catch (err) {
       console.error(err);
     }
@@ -72,110 +80,139 @@ export default function MusicPage() {
   };
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-[#0f0c29] via-[#302b63] to-[#24243e] p-4 text-white">
-      <h1 className="text-2xl font-bold mb-4 text-center">🎶 Music Downloader</h1>
+    <main className="min-h-screen bg-gradient-to-br from-[#0f0c29] via-[#302b63] to-[#24243e] p-6 text-white">
+      <h1 className="text-3xl font-bold mb-6 text-center">🎶 Music Downloader</h1>
 
       {/* Search */}
-      <div className="flex gap-2 justify-center mb-6">
+      <div className="flex gap-2 justify-center mb-8">
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search songs..."
-          className="px-3 py-2 rounded-lg bg-black/40 border border-white/20 w-2/3 text-sm"
+          placeholder="Search for songs..."
+          className="px-4 py-2 rounded-lg bg-black/40 border border-white/20 w-2/3"
         />
         <button
           onClick={() => searchSongs(query)}
-          className="px-3 py-2 rounded-lg bg-gradient-to-r from-pink-500 to-blue-500 font-semibold text-sm"
+          className="px-4 py-2 rounded-lg bg-gradient-to-r from-pink-500 to-blue-500 font-bold"
         >
-          {loading ? <Loader2 className="animate-spin" size={18} /> : <Search size={18} />}
+          {loading ? <Loader2 className="animate-spin" /> : <Search />}
         </button>
       </div>
 
-      {/* Results */}
-      {loading && <p className="text-center text-gray-400">Loading songs...</p>}
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto">
-        {songs.map((song, idx) => (
+      {/* Featured Song */}
+      <AnimatePresence>
+        {songs.length > 0 && (
           <motion.div
-            key={song.videoId}
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="rounded-lg p-3 bg-black/60 border border-white/10 shadow-md backdrop-blur-md max-w-sm mx-auto"
+            layout
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: showRelated ? -20 : 0 }}
+            exit={{ opacity: 0, y: -50 }}
+            className="max-w-2xl mx-auto mb-10 rounded-xl p-6 bg-black/80 border border-white/20 shadow-2xl backdrop-blur-md"
           >
-            <div className="relative w-full h-32 rounded-md overflow-hidden mb-2">
-              {song.thumbnail && (
-                <Image
-                  src={song.thumbnail}
-                  alt={song.title}
-                  fill
-                  className="object-cover"
-                />
-              )}
+            <div className="relative w-full h-56 rounded-lg overflow-hidden mb-4">
+              <Image
+                src={songs[0].thumbnail}
+                alt={songs[0].title}
+                fill
+                className="object-cover"
+              />
             </div>
-            <h2 className="font-medium text-sm truncate">{song.title}</h2>
-            <p className="text-xs text-gray-400">{song.channel}</p>
+            <h2 className="font-semibold text-xl truncate">{songs[0].title}</h2>
+            <p className="text-sm text-gray-400">{songs[0].channel}</p>
 
             {/* Controls */}
-            <div className="flex gap-2 mt-3">
+            <div className="flex gap-3 mt-4">
               <button
-                onClick={() => playSong(idx)}
-                className="flex-1 px-2 py-1 rounded bg-pink-600 hover:bg-pink-700 text-xs flex items-center justify-center gap-1"
+                onClick={() => playSong(0)}
+                className="flex-1 px-3 py-2 rounded-lg bg-pink-600 hover:bg-pink-700 transition"
               >
-                <Play size={14} /> Play
+                <Play size={18} /> Play
               </button>
               <button
-                onClick={() => downloadSong(song.videoId)}
-                disabled={downloading === song.videoId}
-                className="flex-1 px-2 py-1 rounded bg-green-600 hover:bg-green-700 disabled:opacity-50 text-xs flex items-center justify-center gap-1"
+                onClick={() => downloadSong(songs[0].videoId, 0)}
+                disabled={downloading === songs[0].videoId}
+                className="flex-1 px-3 py-2 rounded-lg bg-green-600 hover:bg-green-700 disabled:opacity-50 transition"
               >
-                {downloading === song.videoId ? (
-                  <Loader2 size={14} className="animate-spin" />
+                {downloading === songs[0].videoId ? (
+                  <Loader2 size={18} className="animate-spin" />
                 ) : (
-                  <Download size={14} />
-                )}
-                DL
+                  <Download size={18} />
+                )}{" "}
+                Download
               </button>
             </div>
-
-            {/* Progress bar if downloading */}
-            {downloading === song.videoId && (
-              <motion.div
-                initial={{ width: "0%" }}
-                animate={{ width: "100%" }}
-                transition={{ duration: 3, ease: "easeInOut" }}
-                className="h-1 mt-2 rounded bg-gradient-to-r from-pink-400 via-yellow-400 to-blue-400"
-              />
-            )}
           </motion.div>
-        ))}
-      </div>
+        )}
+      </AnimatePresence>
 
-      {/* Floating player (compact) */}
+      {/* Related Songs */}
+      <AnimatePresence>
+        {showRelated && songs.length > 1 && (
+          <motion.div
+            layout
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            className="max-w-6xl mx-auto px-4 grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
+          >
+            {songs.slice(1).map((song, idx) => (
+              <motion.div
+                key={song.videoId}
+                layout
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="rounded-xl p-4 bg-black/70 border border-white/20 shadow-xl backdrop-blur-md"
+              >
+                <div className="relative w-full h-40 rounded-lg overflow-hidden mb-3">
+                  <Image
+                    src={song.thumbnail}
+                    alt={song.title}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+                <h2 className="font-semibold text-lg truncate">{song.title}</h2>
+                <p className="text-sm text-gray-400">{song.channel}</p>
+
+                {/* Controls */}
+                <div className="flex gap-3 mt-4">
+                  <button
+                    onClick={() => playSong(idx + 1)}
+                    className="flex-1 px-3 py-2 rounded-lg bg-pink-600 hover:bg-pink-700 transition"
+                  >
+                    <Play size={18} /> Play
+                  </button>
+                  <button
+                    onClick={() => downloadSong(song.videoId, idx + 1)}
+                    disabled={downloading === song.videoId}
+                    className="flex-1 px-3 py-2 rounded-lg bg-green-600 hover:bg-green-700 disabled:opacity-50 transition"
+                  >
+                    {downloading === song.videoId ? (
+                      <Loader2 size={18} className="animate-spin" />
+                    ) : (
+                      <Download size={18} />
+                    )}{" "}
+                    Download
+                  </button>
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Floating Player */}
       {current !== null && (
-        <motion.div
-          initial={{ y: 150 }}
-          animate={{ y: 0 }}
-          className="fixed bottom-3 left-1/2 -translate-x-1/2 w-[80%] sm:w-1/3 bg-black/90 backdrop-blur-md p-2 rounded-xl border border-white/10 shadow-lg flex justify-center gap-3"
-        >
-          <button
-            onClick={() => {
-              if (audioRef.current) audioRef.current.pause();
-              setCurrent(null);
-            }}
-            className="px-3 py-1 bg-red-600 rounded-lg flex items-center gap-1 text-xs"
-          >
-            <Square size={14} /> Stop
-          </button>
-          <button
-            onClick={nextSong}
-            className="px-3 py-1 bg-blue-600 rounded-lg flex items-center gap-1 text-xs"
-          >
-            <SkipForward size={14} /> Next
-          </button>
-          <audio ref={audioRef} onEnded={nextSong} className="hidden" controls />
-        </motion.div>
+        <NowPlaying
+          audioRef={audioRef}
+          stopSong={() => {
+            if (audioRef.current) audioRef.current.pause();
+            setCurrent(null);
+          }}
+          nextSong={nextSong}
+        />
       )}
     </main>
   );
-                                     }
-    
+  }
