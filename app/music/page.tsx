@@ -1,16 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import Image from "next/image";
-import { motion } from "framer-motion";
-import {
-  Loader2,
-  Search,
-  Play,
-  Download,
-  SkipForward,
-  Square,
-} from "lucide-react";
+import { Loader2, Search, SkipForward, Square } from "lucide-react";
+import SongGrid from "./SongGrid";
 
 export default function MusicPage() {
   const [query, setQuery] = useState("Kenya top hits");
@@ -20,7 +12,6 @@ export default function MusicPage() {
   const [downloading, setDownloading] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Auto search on load
   useEffect(() => {
     searchSongs(query);
   }, []);
@@ -92,76 +83,24 @@ export default function MusicPage() {
           onClick={() => searchSongs(query)}
           className="px-4 py-2 rounded-lg bg-gradient-to-r from-pink-500 to-blue-500 font-bold"
         >
-          {loading ? <Loader2 className="animate-spin" /> : <Search />}
+          {loading ? <Loader2 className="animate-spin" /> : "Search"}
         </button>
       </div>
 
       {/* Results */}
       {loading && <p className="text-center text-gray-400">Loading songs...</p>}
-
-      <div className="max-w-5xl mx-auto grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {songs.map((song, idx) => (
-          <motion.div
-            key={song.videoId}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="rounded-xl p-4 bg-black/70 border border-white/20 shadow-xl backdrop-blur-md"
-          >
-            <div className="relative w-full h-40 rounded-lg overflow-hidden mb-3">
-              {song.thumbnail && (
-                <Image
-                  src={song.thumbnail}
-                  alt={song.title}
-                  fill
-                  className="object-cover"
-                />
-              )}
-            </div>
-            <h2 className="font-semibold text-lg truncate">{song.title}</h2>
-            <p className="text-sm text-gray-400">{song.channel}</p>
-
-            {/* Controls */}
-            <div className="flex gap-3 mt-4">
-              <button
-                onClick={() => playSong(idx)}
-                className="flex-1 px-3 py-2 rounded-lg bg-pink-600 hover:bg-pink-700 transition text-sm"
-              >
-                <Play size={16} /> Play
-              </button>
-              <button
-                onClick={() => downloadSong(song.videoId, song.title)}
-                disabled={downloading === song.videoId}
-                className="flex-1 px-3 py-2 rounded-lg bg-green-600 hover:bg-green-700 disabled:opacity-50 transition text-sm"
-              >
-                {downloading === song.videoId ? (
-                  <Loader2 size={16} className="animate-spin" />
-                ) : (
-                  <Download size={16} />
-                )}{" "}
-                Download
-              </button>
-            </div>
-
-            {/* Progress bar */}
-            {downloading === song.videoId && (
-              <motion.div
-                initial={{ width: "0%" }}
-                animate={{ width: "100%" }}
-                transition={{ duration: 3, ease: "easeInOut" }}
-                className="h-1 mt-3 rounded bg-gradient-to-r from-pink-400 via-yellow-400 to-blue-400"
-              />
-            )}
-          </motion.div>
-        ))}
-      </div>
+      {!loading && songs.length > 0 && (
+        <SongGrid
+          songs={songs}
+          playSong={playSong}
+          downloadSong={downloadSong}
+          downloading={downloading}
+        />
+      )}
 
       {/* Floating Now Playing */}
       {current !== null && (
-        <motion.div
-          initial={{ y: 100 }}
-          animate={{ y: 0 }}
-          className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[300px] bg-black/90 backdrop-blur-lg p-3 rounded-xl border border-white/20 shadow-xl text-center"
-        >
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[300px] bg-black/90 backdrop-blur-lg p-3 rounded-xl border border-white/20 shadow-xl text-center">
           <div className="flex gap-3 justify-center">
             <button
               onClick={() => {
@@ -185,8 +124,8 @@ export default function MusicPage() {
             className="hidden"
             controls
           />
-        </motion.div>
+        </div>
       )}
     </main>
   );
-  }
+         }
