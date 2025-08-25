@@ -1,4 +1,4 @@
-// app/spotify/page.tsx
+// app/spotify/page.tsx (client)
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -47,8 +47,8 @@ export default function SpotifyPage() {
       }));
       setTracks(normalized);
     } catch (e: any) {
-      console.error(e);
       setError("Search failed");
+      console.error(e);
     } finally {
       setLoading(false);
     }
@@ -64,7 +64,7 @@ export default function SpotifyPage() {
     return `${m}:${s}`;
   }
 
-  // ✅ Fixed fetchDownloadUrl
+  // robust fetch (calls your server-side proxy)
   async function fetchDownloadUrl(spotifyUrl: string) {
     const res = await fetch(`/api/spotify/download?url=${encodeURIComponent(spotifyUrl)}`);
     if (!res.ok) {
@@ -72,13 +72,11 @@ export default function SpotifyPage() {
       throw new Error(`Download API error: ${res.status} ${text}`);
     }
     const json = await res.json();
-
-    // check different shapes Gifted API might return
     return (
-      json?.result?.download_url ||   // normal case
-      json?.result?.url ||           // fallback
-      json?.download_url ||          // alt structure
-      json?.url ||                   // another fallback
+      json?.result?.download_url ||
+      json?.result?.url ||
+      json?.download_url ||
+      json?.url ||
       null
     );
   }
@@ -87,7 +85,7 @@ export default function SpotifyPage() {
     try {
       const t = tracks[idx];
       if (!t?.link) return;
-      const url = await fetchDownloadUrl(t.link);
+      const url = await fetchDownloadUrl(t.link); // server-side proxy handles provider oddities
       if (!url) throw new Error("No playable url returned");
       if (audioRef.current) {
         audioRef.current.src = url;
@@ -95,8 +93,8 @@ export default function SpotifyPage() {
         setCurrentIdx(idx);
       }
     } catch (e: any) {
-      console.error(e);
       setError(`Play failed: ${e.message}`);
+      console.error(e);
     }
   }
 
@@ -113,8 +111,8 @@ export default function SpotifyPage() {
       a.click();
       a.remove();
     } catch (e: any) {
-      console.error(e);
       setError(`Download failed: ${e.message}`);
+      console.error(e);
     } finally {
       setDownloadingLink(null);
     }
@@ -154,70 +152,54 @@ export default function SpotifyPage() {
         )}
 
         <div className="space-y-4">
-          {hasResults
-            ? tracks.map((t, idx) => (
-                <div key={`${t.link}-${idx}`} className="w-full rounded-2xl border border-white/10 bg-black/60 shadow-xl backdrop-blur-md p-4">
-                  <div className="flex gap-4">
-                    <div className="relative shrink-0 w-24 h-24 rounded-xl overflow-hidden bg-white/5">
-                      {t.image ? (
-                        <Image src={t.image} alt={t.name} fill sizes="96px" className="object-cover" />
-                      ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-pink-500/30 to-blue-500/30" />
-                      )}
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-3">
-                        <h3 className="font-semibold truncate">{t.name}</h3>
-                        <span className="text-xs text-white/60">{msToMin(t.duration)}</span>
-                      </div>
-                      <p className="text-sm text-white/70 truncate">{t.artists}</p>
-
-                      <div className="mt-3 flex items-center gap-2">
-                        <button onClick={() => playTrack(idx)} className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-pink-600 hover:bg-pink-700 text-sm">
-                          <Play size={16} /> Play
-                        </button>
-
-                        <button
-                          onClick={() => downloadTrack(t)}
-                          disabled={downloadingLink === t.link}
-                          className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-green-600 hover:bg-green-700 disabled:opacity-60 text-sm"
-                        >
-                          {downloadingLink === t.link ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
-                          Download
-                        </button>
-
-                        <a href={t.link} target="_blank" rel="noreferrer" className="ml-auto text-xs text-blue-300 hover:text-blue-200 underline">
-                          Open in Spotify
-                        </a>
-                      </div>
-
-                      {downloadingLink === t.link && (
-                        <div className="mt-3 h-1 w-full rounded-full bg-white/10 overflow-hidden">
-                          <div className="h-full w-1/3 rounded-full bg-gradient-to-r from-pink-400 via-yellow-400 to-blue-400 animate-[shimmer_1.2s_linear_infinite]" />
-                        </div>
-                      )}
-                    </div>
-                  </div>
+          {hasResults ? tracks.map((t, idx) => (
+            <div key={`${t.link}-${idx}`} className="w-full rounded-2xl border border-white/10 bg-black/60 shadow-xl backdrop-blur-md p-4">
+              <div className="flex gap-4">
+                <div className="relative shrink-0 w-24 h-24 rounded-xl overflow-hidden bg-white/5">
+                  {t.image ? (
+                    // Next Image requires remote patterns allowed for i.scdn.co
+                    <Image src={t.image} alt={t.name} fill sizes="96px" className="object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-pink-500/30 to-blue-500/30" />
+                  )}
                 </div>
-              ))
-            : !loading && <p className="text-center text-white/70 pt-10">No results yet. Try another search.</p>}
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-3">
+                    <h3 className="font-semibold truncate">{t.name}</h3>
+                    <span className="text-xs text-white/60">{msToMin(t.duration)}</span>
+                  </div>
+                  <p className="text-sm text-white/70 truncate">{t.artists}</p>
+
+                  <div className="mt-3 flex items-center gap-2">
+                    <button onClick={() => playTrack(idx)} className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-pink-600 hover:bg-pink-700 text-sm">
+                      <Play size={16} /> Play
+                    </button>
+
+                    <button onClick={() => downloadTrack(t)} disabled={downloadingLink === t.link} className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-green-600 hover:bg-green-700 disabled:opacity-60 text-sm">
+                      {downloadingLink === t.link ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+                      Download
+                    </button>
+
+                    <a href={t.link} target="_blank" rel="noreferrer" className="ml-auto text-xs text-blue-300 hover:text-blue-200 underline">Open in Spotify</a>
+                  </div>
+
+                  {downloadingLink === t.link && (
+                    <div className="mt-3 h-1 w-full rounded-full bg-white/10 overflow-hidden">
+                      <div className="h-full w-1/3 rounded-full bg-gradient-to-r from-pink-400 via-yellow-400 to-blue-400 animate-[shimmer_1.2s_linear_infinite]" />
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )) : !loading && <p className="text-center text-white/70 pt-10">No results yet. Try another search.</p>}
         </div>
       </div>
 
       {currentIdx !== null && (
         <div className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[92%] max-w-sm rounded-2xl border border-white/15 bg-black/80 backdrop-blur-xl shadow-2xl p-3">
           <div className="flex items-center justify-center gap-3">
-            <button
-              onClick={() => {
-                if (audioRef.current) {
-                  audioRef.current.pause();
-                  audioRef.current.currentTime = 0;
-                }
-                setCurrentIdx(null);
-              }}
-              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-sm"
-            >
+            <button onClick={() => { if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime = 0; } setCurrentIdx(null); }} className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-sm">
               <Square size={16} /> Stop
             </button>
             <button onClick={nextTrack} className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-sm">
@@ -228,12 +210,7 @@ export default function SpotifyPage() {
         </div>
       )}
 
-      <style jsx global>{`
-        @keyframes shimmer {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(300%); }
-        }
-      `}</style>
+      <style jsx global>{`@keyframes shimmer {0%{transform:translateX(-100%);}100%{transform:translateX(300%);}}`}</style>
     </main>
   );
 }
