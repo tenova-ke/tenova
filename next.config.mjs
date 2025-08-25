@@ -19,6 +19,11 @@ const nextConfig = {
         hostname: "i.ytimg.com",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "i.scdn.co", // ✅ Spotify album/track covers
+        pathname: "/**",
+      },
     ],
   },
 };
