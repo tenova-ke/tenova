@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import Image from "next/image";
-import { Search, Play, Download, Loader2 } from "lucide-react";
-import NowPlaying from "./components/NowPlaying";
+import { Loader2, Search } from "lucide-react";
+import SongCard from "@/components/SongCard";
+import SongGrid from "@/components/SongGrid";
+import NowPlaying from "@/components/NowPlaying";
 
 export default function MusicPage() {
   const [query, setQuery] = useState("Kenya top hits");
@@ -42,7 +42,6 @@ export default function MusicPage() {
     try {
       const res = await fetch(`/api/youtube/download?url=${song.videoId}`);
       const data = await res.json();
-
       if (audioRef.current) {
         audioRef.current.src = data.result.download_url;
         audioRef.current.play();
@@ -57,16 +56,11 @@ export default function MusicPage() {
     try {
       const res = await fetch(`/api/youtube/download?url=${videoId}`);
       const data = await res.json();
-
       const a = document.createElement("a");
       a.href = data.result.download_url;
       a.download = `${data.result.title || "Tevona"} - ${videoId}.mp3`;
       a.click();
-
-      // 🔥 After first download, reveal related smoothly
-      if (idx === 0) {
-        setShowRelated(true);
-      }
+      if (idx === 0) setShowRelated(true); // 👈 reveal related after first download
     } catch (err) {
       console.error(err);
     }
@@ -80,9 +74,7 @@ export default function MusicPage() {
   };
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-[#0f0c29] via-[#302b63] to-[#24243e] p-6 text-white">
-      <h1 className="text-3xl font-bold mb-6 text-center">🎶 Music Downloader</h1>
-
+    <main className="music-page">
       {/* Search */}
       <div className="flex gap-2 justify-center mb-8">
         <input
@@ -99,110 +91,29 @@ export default function MusicPage() {
         </button>
       </div>
 
-      {/* Featured Song */}
-      <AnimatePresence>
-        {songs.length > 0 && (
-          <motion.div
-            layout
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: showRelated ? -20 : 0 }}
-            exit={{ opacity: 0, y: -50 }}
-            className="max-w-2xl mx-auto mb-10 rounded-xl p-6 bg-black/80 border border-white/20 shadow-2xl backdrop-blur-md"
-          >
-            <div className="relative w-full h-56 rounded-lg overflow-hidden mb-4">
-              <Image
-                src={songs[0].thumbnail}
-                alt={songs[0].title}
-                fill
-                className="object-cover"
-              />
-            </div>
-            <h2 className="font-semibold text-xl truncate">{songs[0].title}</h2>
-            <p className="text-sm text-gray-400">{songs[0].channel}</p>
+      {/* Featured song */}
+      {songs.length > 0 && (
+        <SongCard
+          song={songs[0]}
+          idx={0}
+          playSong={playSong}
+          downloadSong={downloadSong}
+          downloading={downloading}
+          featured
+        />
+      )}
 
-            {/* Controls */}
-            <div className="flex gap-3 mt-4">
-              <button
-                onClick={() => playSong(0)}
-                className="flex-1 px-3 py-2 rounded-lg bg-pink-600 hover:bg-pink-700 transition"
-              >
-                <Play size={18} /> Play
-              </button>
-              <button
-                onClick={() => downloadSong(songs[0].videoId, 0)}
-                disabled={downloading === songs[0].videoId}
-                className="flex-1 px-3 py-2 rounded-lg bg-green-600 hover:bg-green-700 disabled:opacity-50 transition"
-              >
-                {downloading === songs[0].videoId ? (
-                  <Loader2 size={18} className="animate-spin" />
-                ) : (
-                  <Download size={18} />
-                )}{" "}
-                Download
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Related songs */}
+      {showRelated && songs.length > 1 && (
+        <SongGrid
+          songs={songs.slice(1)}
+          playSong={playSong}
+          downloadSong={downloadSong}
+          downloading={downloading}
+        />
+      )}
 
-      {/* Related Songs */}
-      <AnimatePresence>
-        {showRelated && songs.length > 1 && (
-          <motion.div
-            layout
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 50 }}
-            transition={{ duration: 0.5, ease: "easeOut" }}
-            className="max-w-6xl mx-auto px-4 grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
-          >
-            {songs.slice(1).map((song, idx) => (
-              <motion.div
-                key={song.videoId}
-                layout
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="rounded-xl p-4 bg-black/70 border border-white/20 shadow-xl backdrop-blur-md"
-              >
-                <div className="relative w-full h-40 rounded-lg overflow-hidden mb-3">
-                  <Image
-                    src={song.thumbnail}
-                    alt={song.title}
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-                <h2 className="font-semibold text-lg truncate">{song.title}</h2>
-                <p className="text-sm text-gray-400">{song.channel}</p>
-
-                {/* Controls */}
-                <div className="flex gap-3 mt-4">
-                  <button
-                    onClick={() => playSong(idx + 1)}
-                    className="flex-1 px-3 py-2 rounded-lg bg-pink-600 hover:bg-pink-700 transition"
-                  >
-                    <Play size={18} /> Play
-                  </button>
-                  <button
-                    onClick={() => downloadSong(song.videoId, idx + 1)}
-                    disabled={downloading === song.videoId}
-                    className="flex-1 px-3 py-2 rounded-lg bg-green-600 hover:bg-green-700 disabled:opacity-50 transition"
-                  >
-                    {downloading === song.videoId ? (
-                      <Loader2 size={18} className="animate-spin" />
-                    ) : (
-                      <Download size={18} />
-                    )}{" "}
-                    Download
-                  </button>
-                </div>
-              </motion.div>
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Floating Player */}
+      {/* Now Playing */}
       {current !== null && (
         <NowPlaying
           audioRef={audioRef}
