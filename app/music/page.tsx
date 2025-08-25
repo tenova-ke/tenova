@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Loader2, Search } from "lucide-react";
-import SongCard from "@/components/SongCard";
-import SongGrid from "@/components/SongGrid";
-import NowPlaying from "@/components/NowPlaying";
+import SongCard from "./SongCard";
+import SongGrid from "./SongGrid";
+import NowPlaying from "./NowPlaying";
 
 export default function MusicPage() {
   const [query, setQuery] = useState("Kenya top hits");
