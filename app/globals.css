@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Better baseline for mobile */
+html, body {
+  height: 100%;
+  min-height: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden; /* stop sideways scrolling */
+}
+
+/* Prevent images/videos from overflowing on Android */
+img, video, canvas, svg {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Utility: glass card base (used subtly) */
+.glass-card {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.18);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 1.25rem;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.45);
+}
+
+/* Scrollbar (mobile browsers ignore most of this but harmless) */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: #111827; }
+::-webkit-scrollbar-thumb { background: #a855f7; border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: #ff4d6d; }
