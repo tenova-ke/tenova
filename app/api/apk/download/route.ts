@@ -3,97 +3,36 @@ import { NextResponse } from "next/server";
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
-    const id = searchParams.get("id");
-    const pkg = searchParams.get("package");
+    const appName = searchParams.get("name");
 
-    if (!id && !pkg) {
-      return NextResponse.json(
-        { error: "Missing id or package parameter" },
-        { status: 400 }
-      );
+    if (!appName) {
+      return NextResponse.json({ error: "Missing app name" }, { status: 400 });
     }
 
-    // --- 1. Prefer getMeta (more reliable for download links) ---
-    const metaUrl = id
-      ? `https://ws75.aptoide.com/api/7/app/getMeta/app_id=${id}`
-      : `https://ws75.aptoide.com/api/7/app/getMeta/package_name=${pkg}`;
+    // GiftedTech API endpoint
+    const giftedUrl = `https://api.giftedtech.web.id/api/download/apkdl?apikey=gifted&appName=${encodeURIComponent(appName)}`;
 
-    try {
-      const res = await fetch(metaUrl);
-      if (res.ok) {
-        const json = await res.json();
-        const node = json?.nodes?.meta?.data;
-        const file = node?.file;
-
-        if (file?.path) {
-          return NextResponse.json({
-            success: true,
-            id: node?.id,
-            name: node?.name,
-            package: node?.package,
-            version: file?.vername,
-            size: file?.filesize,
-            md5sum: file?.md5sum,
-            download_url: file?.path,
-            mirror_url: file?.path_alt || null,
-          });
-        }
-      }
-    } catch {
-      // if getMeta fails, fall back below
+    const res = await fetch(giftedUrl);
+    if (!res.ok) {
+      return NextResponse.json({ error: "Gifted API failed" }, { status: res.status });
     }
 
-    // --- 2. Fallback: try legacy endpoints ---
-    const endpoints: string[] = [];
-    if (id) {
-      endpoints.push(`https://ws75.aptoide.com/api/7/app/get/id:${id}`);
-      endpoints.push(`https://ws75.aptoide.com/api/7/app/get/app_id=${id}`);
-      endpoints.push(`https://ws75.aptoide.com/api/7/app/get/apk_id=${id}`);
-    }
-    if (pkg) {
-      endpoints.push(`https://ws75.aptoide.com/api/7/app/get/package:${pkg}`);
-      endpoints.push(`https://ws75.aptoide.com/api/7/app/get/name=${pkg}`);
+    const json = await res.json();
+    if (!json.success || !json.result) {
+      return NextResponse.json({ error: "No result from Gifted API" }, { status: 404 });
     }
 
-    let data: any = null;
-    let lastStatus = 0;
-
-    for (const url of endpoints) {
-      try {
-        const res = await fetch(url);
-        lastStatus = res.status;
-        if (!res.ok) continue;
-
-        const json = await res.json();
-        const node = json?.node || json?.data;
-        const file = node?.file || node?.data?.file;
-
-        if (file?.path) {
-          data = { node, file };
-          break;
-        }
-      } catch {
-        continue;
-      }
-    }
-
-    if (!data) {
-      return NextResponse.json(
-        { error: "No valid Aptoide response", lastStatus },
-        { status: lastStatus || 404 }
-      );
-    }
+    const result = json.result;
 
     return NextResponse.json({
       success: true,
-      id: data.node.id,
-      name: data.node.name,
-      package: data.node.package,
-      version: data.file.vername,
-      size: data.file.filesize,
-      md5sum: data.file.md5sum,
-      download_url: data.file.path,
-      mirror_url: data.file.path_alt || null,
+      app: {
+        name: result.appname,
+        icon: result.appicon,
+        developer: result.developer,
+        mimetype: result.mimetype,
+        download_url: result.download_url,
+      },
     });
   } catch (err: any) {
     return NextResponse.json(
@@ -101,4 +40,4 @@ export async function GET(req: Request) {
       { status: 500 }
     );
   }
-      }
+    }
