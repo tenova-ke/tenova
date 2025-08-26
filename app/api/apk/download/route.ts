@@ -1,43 +1,68 @@
-import { NextResponse } from "next/server";
+// app/api/apk/download/route.ts
+import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(req: Request) {
+const GIFTED_API = "https://api.giftedtech.web.id/api/download/apkdl";
+const API_KEY = "gifted"; // Replace with your real API key if different
+
+export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const appName = searchParams.get("name");
 
     if (!appName) {
-      return NextResponse.json({ error: "Missing app name" }, { status: 400 });
+      return NextResponse.json(
+        { success: false, message: "Missing app name (?name=...)" },
+        { status: 400 }
+      );
     }
 
-    // GiftedTech API endpoint
-    const giftedUrl = `https://api.giftedtech.web.id/api/download/apkdl?apikey=gifted&appName=${encodeURIComponent(appName)}`;
+    // 1. Ask Gifted API for download link
+    const giftedRes = await fetch(
+      `${GIFTED_API}?apikey=${API_KEY}&appName=${encodeURIComponent(appName)}`
+    );
 
-    const res = await fetch(giftedUrl);
-    if (!res.ok) {
-      return NextResponse.json({ error: "Gifted API failed" }, { status: res.status });
+    if (!giftedRes.ok) {
+      return NextResponse.json(
+        { success: false, message: "Failed to reach Gifted API" },
+        { status: 502 }
+      );
     }
 
-    const json = await res.json();
-    if (!json.success || !json.result) {
-      return NextResponse.json({ error: "No result from Gifted API" }, { status: 404 });
+    const data = await giftedRes.json();
+
+    if (!data.success || !data.result?.download_url) {
+      return NextResponse.json(
+        { success: false, message: "App not found or no download available" },
+        { status: 404 }
+      );
     }
 
-    const result = json.result;
+    const downloadUrl = data.result.download_url;
 
-    return NextResponse.json({
-      success: true,
-      app: {
-        name: result.appname,
-        icon: result.appicon,
-        developer: result.developer,
-        mimetype: result.mimetype,
-        download_url: result.download_url,
-      },
-    });
+    // 2. Fetch the APK file from Gifted's response
+    const apkRes = await fetch(downloadUrl);
+
+    if (!apkRes.ok || !apkRes.body) {
+      return NextResponse.json(
+        { success: false, message: "Failed to fetch APK file" },
+        { status: 500 }
+      );
+    }
+
+    // 3. Stream APK directly to the user
+    const headers = new Headers();
+    headers.set("Content-Type", "application/vnd.android.package-archive");
+    headers.set(
+      "Content-Disposition",
+      `attachment; filename="${data.result.appname || "app"}.apk"`
+    );
+
+    return new Response(apkRes.body, { headers });
   } catch (err: any) {
+    console.error("APK download error:", err);
     return NextResponse.json(
-      { error: "Download failed", details: err.message },
+      { success: false, message: "Unexpected server error", error: err.message },
       { status: 500 }
     );
   }
-    }
+  }
