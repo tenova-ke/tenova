@@ -52,20 +52,6 @@ export default function ApkPage() {
     }
   }
 
-  // Call GiftedTech API directly to get download URL
-  async function fetchDownloadUrl(appName: string) {
-    const giftedUrl = `https://api.giftedtech.web.id/api/download/apkdl?apikey=gifted&appName=${encodeURIComponent(
-      appName
-    )}`;
-    const res = await fetch(giftedUrl);
-    if (!res.ok) throw new Error(`Gifted API error ${res.status}`);
-    const json = await res.json();
-    if (!json.success || !json.result?.download_url) {
-      throw new Error("Gifted API returned no download URL");
-    }
-    return json.result.download_url as string;
-  }
-
   async function downloadApk(item: ApkResult) {
     setError(null);
     setProgress(0);
@@ -73,21 +59,24 @@ export default function ApkPage() {
     abortRef.current = new AbortController();
 
     try {
-      const url = await fetchDownloadUrl(item.name);
-      if (!url) throw new Error("No download URL returned from Gifted API.");
+      // ✅ Call your Next.js API route (proxy to Gifted)
+      const res = await fetch(`/api/apk/download?name=${encodeURIComponent(item.name)}`, {
+        signal: abortRef.current.signal,
+      });
 
-      const res = await fetch(url, { signal: abortRef.current.signal });
-      if (!res.ok) throw new Error(`File host returned ${res.status}`);
-
-      const contentLength = Number(res.headers.get("content-length") || "0");
-      if (!res.body) {
-        openInNewTab(url);
-        return;
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson?.message || `Download failed (${res.status})`);
       }
+
+      // ✅ Stream response to show progress
+      const contentLength = Number(res.headers.get("content-length") || "0");
+      if (!res.body) throw new Error("No response body from server.");
 
       const reader = res.body.getReader();
       const chunks: Uint8Array[] = [];
       let received = 0;
+
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -97,11 +86,12 @@ export default function ApkPage() {
           if (contentLength) {
             setProgress(Math.round((received / contentLength) * 100));
           } else {
-            setProgress((p) => Math.min(100, p + 2));
+            setProgress((p) => Math.min(100, p + 3));
           }
         }
       }
 
+      // ✅ Create file blob
       const blob = new Blob(chunks, { type: "application/vnd.android.package-archive" });
       const blobUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -112,15 +102,11 @@ export default function ApkPage() {
       a.click();
       a.remove();
       URL.revokeObjectURL(blobUrl);
+
       setProgress(100);
     } catch (err: any) {
       console.error("download error:", err);
-      try {
-        const fallbackUrl = await fetchDownloadUrl(item.name);
-        if (fallbackUrl) openInNewTab(fallbackUrl);
-      } catch {
-        setError(err?.message || "Download failed");
-      }
+      setError(err?.message || "Download failed");
     } finally {
       setTimeout(() => {
         setDownloadingId(null);
@@ -128,10 +114,6 @@ export default function ApkPage() {
       }, 900);
       abortRef.current = null;
     }
-  }
-
-  function openInNewTab(url: string) {
-    window.open(url, "_blank", "noopener,noreferrer");
   }
 
   function cancelDownload() {
@@ -151,7 +133,7 @@ export default function ApkPage() {
             📱 APK Explorer
           </h1>
           <p className="text-center text-white/70 mt-2">
-            Search Aptoide apps and download APKs directly with GiftedTech.
+            Search Aptoide apps and download APKs directly via our API.
           </p>
         </header>
 
@@ -287,4 +269,4 @@ function compactNumber(n?: number) {
 
 function sanitizeFileName(name?: string) {
   return (name || "file").replace(/[\/:*?"<>|]+/g, "").trim();
-  }
+}
