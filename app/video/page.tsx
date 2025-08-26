@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Play, Download, Search } from "lucide-react";
-import Image from "next/image";
+import { Download, Search } from "lucide-react";
 
 type VideoItem = {
   id: string;
@@ -12,110 +11,32 @@ type VideoItem = {
   url: string;
 };
 
-function VideoCard({ video }: { video: VideoItem }) {
-  const handleDownload = async () => {
-    try {
-      const res = await fetch(
-        `https://apis.prexzyvilla.site/download/ytmp4?url=${encodeURIComponent(
-          video.url
-        )}`
-      );
-      const data = await res.json();
-      if (data?.status && data?.data?.downloadURL) {
-        window.open(data.data.downloadURL, "_blank");
-      } else {
-        alert("Download link not available.");
-      }
-    } catch {
-      alert("Failed to get download link.");
-    }
-  };
-
+function VideoCard({ video, onSelect }: { video: VideoItem; onSelect: (v: VideoItem) => void }) {
   return (
-    <div className="min-w-[200px] max-w-[220px] rounded-xl overflow-hidden bg-black/50 border border-white/20 shadow-md">
+    <div
+      onClick={() => onSelect(video)}
+      className="min-w-[200px] max-w-[220px] rounded-xl overflow-hidden bg-black/50 border border-white/20 shadow-md cursor-pointer hover:scale-[1.03] transition"
+    >
       <div className="relative w-full aspect-video">
-        <Image
-          src={video.thumbnail}
-          alt={video.title}
-          fill
-          className="object-cover"
-        />
+        {/* thumbnail */}
+        <img src={video.thumbnail} alt={video.title} className="w-full h-full object-cover" />
       </div>
 
       <div className="p-3">
         <h3 className="text-sm font-semibold line-clamp-2">{video.title}</h3>
         <p className="text-xs text-white/50">{video.channel}</p>
-
-        <div className="mt-3 flex gap-2">
-          <a
-            href={video.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex-1 h-8 rounded-lg bg-blue-600 hover:bg-blue-700 flex items-center justify-center gap-1 text-sm font-medium"
-          >
-            <Play size={14} /> Watch
-          </a>
-          <button
-            onClick={handleDownload}
-            className="flex-1 h-8 rounded-lg bg-green-600 hover:bg-green-700 flex items-center justify-center gap-1 text-sm font-medium"
-          >
-            <Download size={14} /> DL
-          </button>
-        </div>
       </div>
     </div>
-  );
-}
-
-function VideoSection({ title, query }: { title: string; query: string }) {
-  const [videos, setVideos] = useState<VideoItem[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchVideos = async () => {
-      try {
-        const res = await fetch(`/api/youtube/search?q=${encodeURIComponent(query)}`);
-        const data = await res.json();
-        if (data?.results) {
-          const mapped = data.results.map((v: any) => ({
-            id: v.videoId,
-            title: v.title,
-            thumbnail: v.thumbnail,
-            channel: v.channel,
-            url: v.url,
-          }));
-          setVideos(mapped);
-        }
-      } catch (e) {
-        console.error("Failed to fetch videos:", e);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchVideos();
-  }, [query]);
-
-  return (
-    <section className="mb-10">
-      <h2 className="text-lg font-bold mb-3">{title}</h2>
-      {loading ? (
-        <p className="text-sm text-white/50">Loading {query}...</p>
-      ) : (
-        <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2">
-          {videos.map((v) => (
-            <VideoCard key={v.id} video={v} />
-          ))}
-        </div>
-      )}
-    </section>
   );
 }
 
 export default function VideoPage() {
   const [search, setSearch] = useState("");
   const [results, setResults] = useState<VideoItem[]>([]);
+  const [heroVideo, setHeroVideo] = useState<VideoItem | null>(null);
   const [loading, setLoading] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -125,7 +46,7 @@ export default function VideoPage() {
     try {
       const res = await fetch(`/api/youtube/search?q=${encodeURIComponent(search)}`);
       const data = await res.json();
-      if (data?.results) {
+      if (data?.results?.length) {
         const mapped = data.results.map((v: any) => ({
           id: v.videoId,
           title: v.title,
@@ -134,6 +55,8 @@ export default function VideoPage() {
           url: v.url,
         }));
         setResults(mapped);
+        setHeroVideo(mapped[0]);
+        window.scrollTo({ top: 0, behavior: "smooth" });
       }
     } catch (err) {
       console.error("Search failed:", err);
@@ -142,7 +65,29 @@ export default function VideoPage() {
     }
   };
 
-  const heroVideo = results.length > 0 ? results[0] : null;
+  const handleDownload = async () => {
+    if (!heroVideo) return;
+    setDownloading(true);
+    setDownloadError(null);
+
+    try {
+      const res = await fetch(
+        `https://apis.prexzyvilla.site/download/ytmp4?url=${encodeURIComponent(heroVideo.url)}`
+      );
+      const data = await res.json();
+
+      if (data?.status && data?.data?.downloadURL) {
+        // trigger file download
+        window.open(data.data.downloadURL, "_blank");
+      } else {
+        setDownloadError("Download failed. Please try another download page.");
+      }
+    } catch {
+      setDownloadError("Download failed. Please try another download page.");
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   return (
     <div className="px-4 py-6 max-w-6xl mx-auto">
@@ -168,80 +113,66 @@ export default function VideoPage() {
       </form>
 
       {/* Hero card */}
-      <div className="mb-12">
-        {loading ? (
-          <p className="text-sm text-white/50">Searching...</p>
-        ) : heroVideo ? (
-          <div className="rounded-2xl overflow-hidden shadow-lg border border-white/20 bg-black/60">
+      <div className="mb-12 rounded-2xl overflow-hidden shadow-lg border border-white/20 bg-black/60">
+        {heroVideo ? (
+          <>
             <div className="relative w-full aspect-video">
-              <Image
-                src={heroVideo.thumbnail}
-                alt={heroVideo.title}
-                fill
-                className="object-cover"
+              <iframe
+                src={`https://www.youtube.com/embed/${heroVideo.id}?autoplay=1`}
+                title={heroVideo.title}
+                className="w-full h-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                allowFullScreen
               />
             </div>
             <div className="p-4">
               <h1 className="text-xl font-bold">{heroVideo.title}</h1>
               <p className="text-sm text-white/60">{heroVideo.channel}</p>
-              <div className="mt-4 flex gap-3">
-                <a
-                  href={heroVideo.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="h-10 px-5 rounded-xl bg-blue-600 hover:bg-blue-700 flex items-center gap-2"
-                >
-                  <Play size={18} /> Watch
-                </a>
+              <div className="mt-4 flex gap-3 items-center">
                 <button
-                  onClick={async () => {
-                    try {
-                      const res = await fetch(
-                        `https://apis.prexzyvilla.site/download/ytmp4?url=${encodeURIComponent(
-                          heroVideo.url
-                        )}`
-                      );
-                      const data = await res.json();
-                      if (data?.status && data?.data?.downloadURL) {
-                        window.open(data.data.downloadURL, "_blank");
-                      } else {
-                        alert("Download link not available.");
-                      }
-                    } catch {
-                      alert("Download failed.");
-                    }
-                  }}
+                  onClick={handleDownload}
                   className="h-10 px-5 rounded-xl bg-green-600 hover:bg-green-700 flex items-center gap-2"
+                  disabled={downloading}
                 >
-                  <Download size={18} /> Download
+                  {downloading ? (
+                    <div className="w-20 h-1 bg-white/20 rounded-full overflow-hidden">
+                      <div className="h-full bg-white animate-pulse"></div>
+                    </div>
+                  ) : (
+                    <>
+                      <Download size={18} /> Download
+                    </>
+                  )}
                 </button>
+                {downloadError && (
+                  <span className="text-sm text-red-400">{downloadError}</span>
+                )}
               </div>
             </div>
-          </div>
+          </>
         ) : (
-          <div className="rounded-2xl overflow-hidden shadow-lg border border-white/20 bg-black/60 p-6 text-center">
-            <p className="text-white/60">Search for a song, artist, or video...</p>
+          <div className="p-6 text-center text-white/60">
+            Search for a song, artist, or video...
           </div>
         )}
       </div>
 
-      {/* Search results below hero */}
-      {results.length > 1 && (
+      {/* Results section */}
+      {loading ? (
+        <p className="text-sm text-white/50">Searching...</p>
+      ) : results.length > 1 ? (
         <section className="mb-12">
-          <h2 className="text-lg font-bold mb-3">Search Results</h2>
+          <h2 className="text-lg font-bold mb-3">Results</h2>
           <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2">
-            {results.slice(1).map((v) => (
-              <VideoCard key={v.id} video={v} />
+            {results.map((v) => (
+              <VideoCard key={v.id} video={v} onSelect={(vid) => {
+                setHeroVideo(vid);
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }} />
             ))}
           </div>
         </section>
-      )}
-
-      {/* Default trending sections */}
-      <VideoSection title="Trending Songs" query="Trending Songs" />
-      <VideoSection title="Trending Comedy" query="Trending Comedy" />
-      <VideoSection title="Trending News" query="Trending News" />
-      <VideoSection title="Trending Lifestyle" query="Trending Lifestyle" />
+      ) : null}
     </div>
   );
-  }
+                   }
