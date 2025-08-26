@@ -7,12 +7,44 @@ export async function GET(req: Request) {
     const pkg = searchParams.get("package");
 
     if (!id && !pkg) {
-      return NextResponse.json({ error: "Missing id or package parameter" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Missing id or package parameter" },
+        { status: 400 }
+      );
     }
 
-    // List of possible endpoints Aptoide uses
-    const endpoints: string[] = [];
+    // --- 1. Prefer getMeta (more reliable for download links) ---
+    const metaUrl = id
+      ? `https://ws75.aptoide.com/api/7/app/getMeta/app_id=${id}`
+      : `https://ws75.aptoide.com/api/7/app/getMeta/package_name=${pkg}`;
 
+    try {
+      const res = await fetch(metaUrl);
+      if (res.ok) {
+        const json = await res.json();
+        const node = json?.nodes?.meta?.data;
+        const file = node?.file;
+
+        if (file?.path) {
+          return NextResponse.json({
+            success: true,
+            id: node?.id,
+            name: node?.name,
+            package: node?.package,
+            version: file?.vername,
+            size: file?.filesize,
+            md5sum: file?.md5sum,
+            download_url: file?.path,
+            mirror_url: file?.path_alt || null,
+          });
+        }
+      }
+    } catch {
+      // if getMeta fails, fall back below
+    }
+
+    // --- 2. Fallback: try legacy endpoints ---
+    const endpoints: string[] = [];
     if (id) {
       endpoints.push(`https://ws75.aptoide.com/api/7/app/get/id:${id}`);
       endpoints.push(`https://ws75.aptoide.com/api/7/app/get/app_id=${id}`);
@@ -35,6 +67,7 @@ export async function GET(req: Request) {
         const json = await res.json();
         const node = json?.node || json?.data;
         const file = node?.file || node?.data?.file;
+
         if (file?.path) {
           data = { node, file };
           break;
@@ -68,4 +101,4 @@ export async function GET(req: Request) {
       { status: 500 }
     );
   }
-}
+      }
