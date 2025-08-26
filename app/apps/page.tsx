@@ -27,7 +27,6 @@ export default function ApkPage() {
   const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
-    // initial search
     doSearch(query);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -44,8 +43,7 @@ export default function ApkPage() {
       const res = await fetch(`/api/apk/search?query=${encodeURIComponent(q)}`);
       if (!res.ok) throw new Error(`Search failed (${res.status})`);
       const json = await res.json();
-      // normalized results expected at json.results (based on your sample)
-      setResults((json.results || json.results || []) as ApkResult[]);
+      setResults((json.results || []) as ApkResult[]);
     } catch (e: any) {
       console.error(e);
       setError(e?.message || "Search failed");
@@ -54,19 +52,20 @@ export default function ApkPage() {
     }
   }
 
-  // Get the download_url from your backend route (/api/apk/download?id=...)
-  async function fetchDownloadUrl(id: number) {
-    const res = await fetch(`/api/apk/download?id=${encodeURIComponent(String(id))}`);
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error(`Download API error: ${res.status} ${text}`);
-    }
+  // Call GiftedTech API directly to get download URL
+  async function fetchDownloadUrl(appName: string) {
+    const giftedUrl = `https://api.giftedtech.web.id/api/download/apkdl?apikey=gifted&appName=${encodeURIComponent(
+      appName
+    )}`;
+    const res = await fetch(giftedUrl);
+    if (!res.ok) throw new Error(`Gifted API error ${res.status}`);
     const json = await res.json();
-    // your route returns download_url at the top-level in earlier snippet
-    return json?.download_url || json?.result?.download_url || json?.result?.download || null;
+    if (!json.success || !json.result?.download_url) {
+      throw new Error("Gifted API returned no download URL");
+    }
+    return json.result.download_url as string;
   }
 
-  // Attempt streaming the actual APK so we can show progress. If that fails, fallback to opening the URL.
   async function downloadApk(item: ApkResult) {
     setError(null);
     setProgress(0);
@@ -74,17 +73,14 @@ export default function ApkPage() {
     abortRef.current = new AbortController();
 
     try {
-      const url = await fetchDownloadUrl(item.id);
-      if (!url) throw new Error("No download URL returned from server.");
+      const url = await fetchDownloadUrl(item.name);
+      if (!url) throw new Error("No download URL returned from Gifted API.");
 
-      // Try streaming fetch for progress tracking
       const res = await fetch(url, { signal: abortRef.current.signal });
       if (!res.ok) throw new Error(`File host returned ${res.status}`);
 
       const contentLength = Number(res.headers.get("content-length") || "0");
-      // if no body or no stream, fallback to fallback anchor
       if (!res.body) {
-        // fallback
         openInNewTab(url);
         return;
       }
@@ -101,13 +97,11 @@ export default function ApkPage() {
           if (contentLength) {
             setProgress(Math.round((received / contentLength) * 100));
           } else {
-            // unknown content length: animate an indeterminate progress visually
             setProgress((p) => Math.min(100, p + 2));
           }
         }
       }
 
-      // create blob and trigger download
       const blob = new Blob(chunks, { type: "application/vnd.android.package-archive" });
       const blobUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -121,11 +115,10 @@ export default function ApkPage() {
       setProgress(100);
     } catch (err: any) {
       console.error("download error:", err);
-      // fallback: if we couldn't stream, attempt to open the direct link in a new tab
       try {
-        const fallbackUrl = await fetchDownloadUrl(item.id);
+        const fallbackUrl = await fetchDownloadUrl(item.name);
         if (fallbackUrl) openInNewTab(fallbackUrl);
-      } catch (e) {
+      } catch {
         setError(err?.message || "Download failed");
       }
     } finally {
@@ -157,7 +150,9 @@ export default function ApkPage() {
           <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-center bg-clip-text text-transparent bg-gradient-to-r from-pink-400 via-yellow-300 to-blue-400">
             📱 APK Explorer
           </h1>
-          <p className="text-center text-white/70 mt-2">Search Aptoide apps and download APKs directly. Fast UI with live progress.</p>
+          <p className="text-center text-white/70 mt-2">
+            Search Aptoide apps and download APKs directly with GiftedTech.
+          </p>
         </header>
 
         {/* Search bar */}
@@ -198,7 +193,6 @@ export default function ApkPage() {
             >
               <div className="w-20 h-20 shrink-0 rounded-lg overflow-hidden bg-white/5 flex items-center justify-center">
                 {r.icon ? (
-                  // using plain img to avoid Next/Image remote domain issues in build config
                   <img src={r.icon} alt={r.name} className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full bg-gradient-to-br from-pink-500/20 to-blue-500/20" />
@@ -209,7 +203,9 @@ export default function ApkPage() {
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <h3 className="font-semibold truncate">{r.name}</h3>
-                    <p className="text-sm text-white/70 truncate mt-1">{r.developer || r.store || "Unknown developer"}</p>
+                    <p className="text-sm text-white/70 truncate mt-1">
+                      {r.developer || r.store || "Unknown developer"}
+                    </p>
                     <div className="flex gap-3 items-center text-xs text-white/60 mt-2">
                       <span>{r.version ? `v${r.version}` : "-"}</span>
                       <span>•</span>
@@ -243,7 +239,6 @@ export default function ApkPage() {
                   </div>
                 </div>
 
-                {/* Progress bar per item */}
                 {downloadingId === r.id && (
                   <div className="mt-3">
                     <div className="h-2 w-full rounded-full bg-white/10 overflow-hidden">
@@ -265,25 +260,6 @@ export default function ApkPage() {
           ))}
         </section>
       </div>
-
-      {/* small animated bottom shimmer */}
-      <style jsx>{`
-        @keyframes shimmerLine {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(300%); }
-        }
-        .shimmer-bg::after {
-          content: "";
-          position: absolute;
-          left: 0;
-          top: 0;
-          height: 100%;
-          width: 30%;
-          transform: translateX(-100%);
-          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
-          animation: shimmerLine 1.2s linear infinite;
-        }
-      `}</style>
     </main>
   );
 }
@@ -310,5 +286,5 @@ function compactNumber(n?: number) {
 }
 
 function sanitizeFileName(name?: string) {
-  return (name || "file").replace(/[\\\/:*?"<>|]+/g, "").trim();
-}
+  return (name || "file").replace(/[\/:*?"<>|]+/g, "").trim();
+  }
