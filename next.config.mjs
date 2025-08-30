@@ -24,6 +24,16 @@ const nextConfig = {
         hostname: "i.scdn.co", // ✅ Spotify album/track covers
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "e1.yotools.net", // ✅ Ephoto360 generated images
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "e2.yotools.net", // ✅ Some effects load from e2
+        pathname: "/**",
+      },
     ],
   },
 };
