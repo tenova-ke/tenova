@@ -1,9 +1,9 @@
-import "../globals.css";
+import "./globals.css";
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import SiteShell from "./site-shell";
+import SiteShell from "./site-shell"; // client wrapper that checks the route
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -19,17 +19,14 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={poppins.variable}>
-      <body className="min-h-[100dvh] min-w-[100vw] bg-gradient-to-br from-[#0f2027] via-[#2c5364] to-[#24243e] text-white overflow-x-hidden flex flex-col">
+      <body className="min-h-[100svh] bg-gradient-to-br from-[#0f0c29] via-[#302b63] to-[#24243e] text-white overflow-x-hidden">
         {/* Shell decides whether to show global nav/footer (hidden on /music) */}
-        <SiteShell navbar={<Navbar />} footer={<Footer />}>
-          <main className="flex-1 w-full flex flex-col items-center justify-start px-4 md:px-10 pt-20 pb-16 z-10">
-            {children}
-          </main>
-        </SiteShell>
+        <SiteShell navbar={<Navbar />} footer={<Footer />}>{children}</SiteShell>
 
-        {/* Modern subtle background glow */}
-        <div className="pointer-events-none fixed top-32 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-gradient-to-r from-pink-500/25 via-yellow-400/18 to-blue-500/22 opacity-30 blur-[150px] rounded-full z-0" />
+        {/* subtle glow */}
+        <div className="pointer-events-none fixed top-40 left-1/2 -translate-x-1/2 w-[520px] h-[520px] bg-gradient-to-r from-pink-500/30 via-yellow-400/25 to-blue-500/30 blur-[140px] rounded-full" />
       </body>
     </html>
   );
   }
+  
