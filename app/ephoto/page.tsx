@@ -83,13 +83,26 @@ export default function EphotoPage() {
     }
   }
 
-  function handleDownload(url: string, filename: string) {
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = filename || "image.png";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  // ✅ Force download instead of opening in browser
+  async function handleDownload(url: string, filename: string) {
+    try {
+      const res = await fetch(url);
+      const blob = await res.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = filename || "image.png";
+      document.body.appendChild(link);
+      link.click();
+
+      // cleanup
+      link.remove();
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      console.error("Download failed", err);
+      alert("❌ Failed to download image.");
+    }
   }
 
   const filtered = effects.filter((fx) =>
@@ -224,4 +237,4 @@ export default function EphotoPage() {
       </div>
     </div>
   );
-    }
+        }
