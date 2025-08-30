@@ -14,19 +14,30 @@
   --color-success: #22c55e;
 }
 
-/* Modern baseline for mobile */
+/* Modern baseline for mobile and Android */
 html, body {
   height: 100%;
-  min-height: 100%;
+  min-height: 100dvh;
+  min-width: 100vw;
   font-family: 'Inter', 'Segoe UI', sans-serif;
   background: var(--color-bg-gradient);
   color: #e5e7eb;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
+  overscroll-behavior-y: contain;
 }
 
-/* Prevent images/videos from overflowing on Android */
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  min-width: 100vw;
+  box-sizing: border-box;
+  position: relative;
+}
+
+/* Prevent images/videos from overflowing */
 img, video, canvas, svg {
   max-width: 100%;
   height: auto;
@@ -35,7 +46,7 @@ img, video, canvas, svg {
   box-shadow: 0 2px 12px rgba(16,24,40,0.12);
 }
 
-/* Utility: glass card base (used subtly) */
+/* Utility: glass card base */
 .glass-card {
   background: var(--color-glass);
   border: 1px solid var(--color-glass-border);
@@ -70,3 +81,11 @@ img, video, canvas, svg {
 ::-webkit-scrollbar-track { background: #111827; }
 ::-webkit-scrollbar-thumb { background: var(--color-accent); border-radius: 9999px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--color-error); }
+
+/* Prevent double scroll on mobile */
+#root, #__next {
+  height: 100%;
+  min-height: 100dvh;
+  min-width: 100vw;
+  overflow-x: hidden;
+  }
