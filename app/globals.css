@@ -2,13 +2,28 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Better baseline for mobile */
+/* Color Palette Variables */
+:root {
+  --color-bg-gradient: linear-gradient(135deg, #0f2027 0%, #2c5364 100%);
+  --color-glass: rgba(255,255,255,0.11);
+  --color-glass-border: rgba(255,255,255,0.22);
+  --color-accent: #a855f7;
+  --color-accent-dark: #7c3aed;
+  --color-accent-light: #fbbf24;
+  --color-error: #ff4d6d;
+  --color-success: #22c55e;
+}
+
+/* Modern baseline for mobile */
 html, body {
   height: 100%;
   min-height: 100%;
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  background: var(--color-bg-gradient);
+  color: #e5e7eb;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden; /* stop sideways scrolling */
+  overflow-x: hidden;
 }
 
 /* Prevent images/videos from overflowing on Android */
@@ -16,20 +31,42 @@ img, video, canvas, svg {
   max-width: 100%;
   height: auto;
   display: block;
+  border-radius: 0.75rem;
+  box-shadow: 0 2px 12px rgba(16,24,40,0.12);
 }
 
 /* Utility: glass card base (used subtly) */
 .glass-card {
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.18);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-radius: 1.25rem;
-  box-shadow: 0 8px 28px rgba(0,0,0,0.45);
+  background: var(--color-glass);
+  border: 1px solid var(--color-glass-border);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+  border-radius: 1.5rem;
+  box-shadow: 0 10px 32px rgba(0,0,0,0.50);
+  padding: 2rem;
+  transition: box-shadow 0.2s;
+}
+.glass-card:hover {
+  box-shadow: 0 16px 48px rgba(168,85,247,0.25);
+  border-color: var(--color-accent);
 }
 
-/* Scrollbar (mobile browsers ignore most of this but harmless) */
+/* Accent buttons */
+.btn-accent {
+  background: var(--color-accent);
+  color: #fff;
+  font-weight: 500;
+  border-radius: 9999px;
+  padding: 0.5rem 1.5rem;
+  box-shadow: 0 2px 12px rgba(168,85,247,0.22);
+  transition: background 0.2s;
+}
+.btn-accent:hover {
+  background: var(--color-accent-dark);
+}
+
+/* Scrollbar (for desktop browsers) */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: #111827; }
-::-webkit-scrollbar-thumb { background: #a855f7; border-radius: 9999px; }
-::-webkit-scrollbar-thumb:hover { background: #ff4d6d; }
+::-webkit-scrollbar-thumb { background: var(--color-accent); border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-error); }
