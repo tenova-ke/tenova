@@ -2,9 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { Loader2, Download, ExternalLink } from "lucide-react";
+import { Download, ExternalLink } from "lucide-react";
 
-// All tools from Gifted API
 const effects = [
   { name: "Glossy Silver", key: "glossysilver" },
   { name: "Write Text", key: "writetext" },
@@ -45,7 +44,6 @@ export default function EphotoPage() {
   const [results, setResults] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  // Auto generate default on load
   useEffect(() => {
     generate("blackpink", "Tevona");
   }, []);
@@ -54,7 +52,9 @@ export default function EphotoPage() {
     setLoading(true);
     setError(null);
     try {
-      const url = `https://api.giftedtech.web.id/api/ephoto360/${tool}?apikey=gifted&text=${encodeURIComponent(input)}`;
+      const url = `https://api.giftedtech.web.id/api/ephoto360/${tool}?apikey=gifted&text=${encodeURIComponent(
+        input
+      )}`;
       const res = await fetch(url);
       const data = await res.json();
 
@@ -85,33 +85,37 @@ export default function EphotoPage() {
   );
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
-      <h1 className="text-4xl font-bold mb-2">✨ Ephoto Effects</h1>
-      <p className="text-gray-600 mb-6">Generate stunning text effects instantly.</p>
+    <div className="p-6 max-w-6xl mx-auto bg-gradient-to-b from-gray-900 via-gray-800 to-black text-white min-h-screen">
+      <h1 className="text-4xl font-bold mb-2 text-purple-400 drop-shadow-lg">
+        ✨ Ephoto Effects
+      </h1>
+      <p className="text-gray-300 mb-6">
+        Generate stunning text effects instantly.
+      </p>
 
       {/* Search + Input */}
-      <div className="flex gap-2 mb-4">
+      <div className="flex gap-2 mb-6">
         <input
           type="text"
           placeholder="Enter text..."
           value={text}
           onChange={(e) => setText(e.target.value)}
-          className="flex-1 p-2 border rounded"
+          className="flex-1 p-3 rounded-2xl bg-gray-700 text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 outline-none"
         />
         <input
           type="text"
           placeholder="Search tools..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-1/3 p-2 border rounded"
+          className="w-1/3 p-3 rounded-2xl bg-gray-700 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 outline-none"
         />
       </div>
 
       {/* Tool Selector */}
-      <div className="flex space-x-2 overflow-x-auto pb-2 mb-6">
+      <div className="flex space-x-3 overflow-x-auto pb-2 mb-6 scrollbar-hide">
         <button
           onClick={generateAll}
-          className="px-4 py-2 bg-purple-600 text-white rounded whitespace-nowrap"
+          className="px-6 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-full font-semibold shadow-md hover:scale-105 transition"
         >
           All
         </button>
@@ -122,8 +126,10 @@ export default function EphotoPage() {
               setSelected(fx.key);
               generate(fx.key, text);
             }}
-            className={`px-4 py-2 rounded whitespace-nowrap ${
-              selected === fx.key ? "bg-blue-600 text-white" : "bg-gray-200"
+            className={`px-6 py-2 rounded-full font-semibold shadow-md hover:scale-105 transition ${
+              selected === fx.key
+                ? "bg-gradient-to-r from-blue-600 to-cyan-500 text-white"
+                : "bg-gray-600 text-gray-200 hover:bg-gray-500"
             }`}
           >
             {fx.name}
@@ -132,33 +138,40 @@ export default function EphotoPage() {
       </div>
 
       {/* Loader / Error */}
-      {loading && <p className="text-blue-500">⚡ Generating...</p>}
-      {error && <p className="text-red-500">{error}</p>}
+      {loading && <p className="text-blue-400 animate-pulse">⚡ Generating...</p>}
+      {error && <p className="text-red-400">{error}</p>}
 
       {/* Results */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mt-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 mt-6">
         {results.map((r, i) => (
-          <div key={i} className="border rounded shadow p-3 bg-white">
-            <h2 className="font-semibold mb-2">{r.tool}</h2>
+          <div
+            key={i}
+            className="rounded-2xl overflow-hidden shadow-lg bg-gradient-to-b from-gray-800 to-gray-900 hover:scale-105 transition transform"
+          >
+            <div className="p-3 text-center border-b border-gray-700">
+              <h2 className="font-semibold text-lg text-purple-300">
+                {r.tool}
+              </h2>
+            </div>
             <Image
               src={r.image}
               alt={r.tool}
               width={400}
               height={400}
-              className="rounded mb-2"
+              className="rounded-b-2xl"
             />
-            <div className="flex gap-2">
+            <div className="flex gap-2 p-3 bg-gray-800">
               <a
                 href={r.image}
                 target="_blank"
-                className="flex-1 text-center px-3 py-1 bg-blue-600 text-white rounded flex items-center justify-center"
+                className="flex-1 text-center px-3 py-2 bg-blue-600 rounded-full flex items-center justify-center font-semibold hover:bg-blue-500 transition"
               >
                 <ExternalLink className="w-4 h-4 mr-1" /> View
               </a>
               <a
                 href={r.image}
                 download
-                className="flex-1 text-center px-3 py-1 bg-green-600 text-white rounded flex items-center justify-center"
+                className="flex-1 text-center px-3 py-2 bg-green-600 rounded-full flex items-center justify-center font-semibold hover:bg-green-500 transition"
               >
                 <Download className="w-4 h-4 mr-1" /> Download
               </a>
@@ -168,14 +181,14 @@ export default function EphotoPage() {
       </div>
 
       {/* How to use */}
-      <div className="mt-12 p-6 border rounded bg-gray-50">
-        <h2 className="text-2xl font-bold mb-2">📖 How to Use</h2>
-        <ol className="list-decimal pl-5 space-y-1">
+      <div className="mt-12 text-gray-300 leading-relaxed">
+        <h2 className="text-2xl font-bold mb-2 text-purple-400">📖 How to Use</h2>
+        <ol className="list-decimal pl-6 space-y-2">
           <li>Enter your text in the input field above.</li>
           <li>Search or scroll to find the effect you like.</li>
           <li>Click the effect button to generate.</li>
           <li>Wait for the result, then View or Download.</li>
-          <li>Or click <strong>All</strong> to generate across all effects.</li>
+          <li>Or click <strong className="text-pink-400">All</strong> to generate across all effects.</li>
         </ol>
       </div>
     </div>
