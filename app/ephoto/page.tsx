@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { Download, ExternalLink } from "lucide-react";
+import { Download, ExternalLink, X } from "lucide-react";
 
 const effects = [
   { name: "Glossy Silver", key: "glossysilver" },
@@ -44,6 +44,9 @@ export default function EphotoPage() {
   const [results, setResults] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
 
+  // Modal state
+  const [preview, setPreview] = useState<string | null>(null);
+
   useEffect(() => {
     generate("blackpink", "Tevona");
   }, []);
@@ -78,6 +81,15 @@ export default function EphotoPage() {
     for (const fx of effects) {
       await generate(fx.key, text);
     }
+  }
+
+  function handleDownload(url: string, filename: string) {
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename || "image.png";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   }
 
   const filtered = effects.filter((fx) =>
@@ -161,24 +173,43 @@ export default function EphotoPage() {
               className="rounded-b-2xl"
             />
             <div className="flex gap-2 p-3 bg-gray-800">
-              <a
-                href={r.image}
-                target="_blank"
+              <button
+                onClick={() => setPreview(r.image)}
                 className="flex-1 text-center px-3 py-2 bg-blue-600 rounded-full flex items-center justify-center font-semibold hover:bg-blue-500 transition"
               >
                 <ExternalLink className="w-4 h-4 mr-1" /> View
-              </a>
-              <a
-                href={r.image}
-                download
+              </button>
+              <button
+                onClick={() => handleDownload(r.image, `${r.tool}.png`)}
                 className="flex-1 text-center px-3 py-2 bg-green-600 rounded-full flex items-center justify-center font-semibold hover:bg-green-500 transition"
               >
                 <Download className="w-4 h-4 mr-1" /> Download
-              </a>
+              </button>
             </div>
           </div>
         ))}
       </div>
+
+      {/* Modal for Preview */}
+      {preview && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+          <div className="relative max-w-3xl max-h-[90vh]">
+            <button
+              onClick={() => setPreview(null)}
+              className="absolute -top-10 right-0 bg-red-600 p-2 rounded-full hover:bg-red-500"
+            >
+              <X className="w-6 h-6 text-white" />
+            </button>
+            <Image
+              src={preview}
+              alt="Preview"
+              width={800}
+              height={800}
+              className="rounded-lg shadow-lg"
+            />
+          </div>
+        </div>
+      )}
 
       {/* How to use */}
       <div className="mt-12 text-gray-300 leading-relaxed">
@@ -187,10 +218,10 @@ export default function EphotoPage() {
           <li>Enter your text in the input field above.</li>
           <li>Search or scroll to find the effect you like.</li>
           <li>Click the effect button to generate.</li>
-          <li>Wait for the result, then View or Download.</li>
+          <li>Wait for the result, then View inline or Download instantly.</li>
           <li>Or click <strong className="text-pink-400">All</strong> to generate across all effects.</li>
         </ol>
       </div>
     </div>
   );
-  }
+    }
