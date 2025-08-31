@@ -25,7 +25,7 @@ export default function YoutubePage() {
 
     try {
       const res = await fetch(
-        `https://api.giftedtech.web.id/api/search/yts?apikey=gifted&query=${encodeURIComponent(
+        `https://api.giftedtech.web.id/api/search/yts?apikey=gifted_api_jsgt5su7s&query=${encodeURIComponent(
           query
         )}`
       );
@@ -43,7 +43,7 @@ export default function YoutubePage() {
   async function getVideoUrl(videoUrl: string) {
     try {
       let res = await fetch(
-        `https://api.giftedtech.web.id/api/download/ytmp4?apikey=gifted&url=${encodeURIComponent(
+        `https://api.giftedtech.web.id/api/download/ytmp4?apikey=gifted_api_jsgt5su7s&url=${encodeURIComponent(
           videoUrl
         )}`
       );
@@ -51,7 +51,7 @@ export default function YoutubePage() {
       if (data?.result?.download_url) return data.result.download_url;
 
       res = await fetch(
-        `https://api.giftedtech.web.id/api/download/ytdlv2?apikey=gifted&url=${encodeURIComponent(
+        `https://api.giftedtech.web.id/api/download/ytdlv2?apikey=gifted_api_jsgt5su7s&url=${encodeURIComponent(
           videoUrl
         )}`
       );
