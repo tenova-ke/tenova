@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
 
   try {
     // Gifted API endpoint for XVideos
-    const apiUrl = `https://api.giftedtech.web.id/api/download/xvideos?apikey=gifted&url=${encodeURIComponent(
+    const apiUrl = `https://api.giftedtech.web.id/api/download/xvideos?apikey=gifted_api_jsgt5su7s&url=${encodeURIComponent(
       url
     )}`;
 
