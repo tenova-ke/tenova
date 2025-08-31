@@ -5,7 +5,7 @@ import { Code, Copy, RefreshCw } from "lucide-react";
 
 export default function Base64ToolPage() {
   const [mode, setMode] = useState<"encode" | "decode">("encode");
-  const [input, setInput] = useState("Gifted Tech");
+  const [input, setInput] = useState("Tracker Wanga");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -22,7 +22,7 @@ export default function Base64ToolPage() {
 
     try {
       const endpoint = mode === "encode" ? "ebase" : "dbase";
-      const url = `https://api.giftedtech.web.id/api/tools/${endpoint}?apikey=gifted&query=${encodeURIComponent(
+      const url = `https://api.giftedtech.web.id/api/tools/${endpoint}?apikey=gifted_api_jsgt5su7s&query=${encodeURIComponent(
         input
       )}`;
 
