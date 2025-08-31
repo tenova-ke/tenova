@@ -20,7 +20,7 @@ export default function FancyFontsPage() {
     setResults([]);
 
     try {
-      const url = `https://api.giftedtech.web.id/api/tools/fancyv2?apikey=gifted&text=${encodeURIComponent(
+      const url = `https://api.giftedtech.web.id/api/tools/fancyv2?apikey=gifted_api_jsgt5su7s&text=${encodeURIComponent(
         input
       )}`;
 
