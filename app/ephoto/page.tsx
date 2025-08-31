@@ -55,7 +55,7 @@ export default function EphotoPage() {
     setLoading(true);
     setError(null);
     try {
-      const url = `https://api.giftedtech.web.id/api/ephoto360/${tool}?apikey=gifted&text=${encodeURIComponent(
+      const url = `https://api.giftedtech.web.id/api/ephoto360/${tool}?apikey=gifted_api_jsgt5su7s&text=${encodeURIComponent(
         input
       )}`;
       const res = await fetch(url);
