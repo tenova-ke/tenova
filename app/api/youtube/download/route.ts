@@ -5,7 +5,7 @@ export const runtime = "nodejs";        // don't use edge for this
 export const dynamic = "force-dynamic"; // no caching, always run server-side
 
 const GIFTED_BASE = process.env.GIFTED_API_BASE || "https://api.giftedtech.web.id";
-const GIFTED_KEY  = process.env.GIFTED_API_KEY  || "gifted";
+const GIFTED_KEY  = process.env.GIFTED_API_KEY  || "gifted_api_jsgt5su7s";
 
 // We’ll try a few Gifted endpoints and use the first that returns a direct audio URL
 const ENDPOINTS = [
