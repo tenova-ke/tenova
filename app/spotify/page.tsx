@@ -13,7 +13,7 @@ type Track = {
   id?: string;
 };
 
-const GIFTED_KEY = "gifted"; // put real key if different
+const GIFTED_KEY = "gifted_api_jsgt5su7s"; // put real key if different
 const GIFTED_BASE = "https://api.giftedtech.web.id";
 
 export default function SpotifyPage() {
