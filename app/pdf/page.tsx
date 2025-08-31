@@ -22,7 +22,7 @@ export default function TextToPdfPage() {
     setPdfUrl(null);
 
     try {
-      const url = `https://api.giftedtech.web.id/api/tools/topdf?apikey=gifted&query=${encodeURIComponent(
+      const url = `https://api.giftedtech.web.id/api/tools/topdf?apikey=gifted_api_jsgt5su7s&query=${encodeURIComponent(
         input
       )}`;
 
