@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const API_KEY = "gifted"; // replace with your real key
+const API_KEY = "gifted_api_jsgt5su7s"; // replace with your real key
 const BASE = "https://api.giftedtech.web.id/api/download";
 
 export async function GET(req: NextRequest) {
