@@ -11,7 +11,7 @@ export async function GET(req: Request) {
 
   try {
     // use gifted spotifydl endpoint (working)
-    const giftedUrl = `https://api.giftedtech.web.id/api/download/spotifydl?apikey=gifted&url=${encodeURIComponent(
+    const giftedUrl = `https://api.giftedtech.web.id/api/download/spotifydl?apikey=gifted_api_jsgt5su7s&url=${encodeURIComponent(
       url
     )}`;
 
