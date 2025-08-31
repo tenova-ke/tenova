@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 
 const GIFTED_BASE = process.env.GIFTED_API_BASE ?? "https://api.giftedtech.web.id";
-const GIFTED_KEY = process.env.GIFTED_API_KEY ?? "gifted";
+const GIFTED_KEY = process.env.GIFTED_API_KEY ?? "gifted_api_jsgt5su7s";
 
 async function getOEmbedCover(trackUrl: string) {
   try {
