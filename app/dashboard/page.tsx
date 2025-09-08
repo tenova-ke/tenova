@@ -1,0 +1,463 @@
+"use client";
+
+import { useEffect, useMemo, useState, useRef } from "react";
+import { motion } from "framer-motion";
+import {
+  Music,
+  Youtube,
+  ImageIcon,
+  FileText,
+  Spotify,
+  Lock,
+  Users,
+  Download,
+  Wifi,
+  Zap,
+} from "lucide-react";
+import {
+  LineChart,
+  Line,
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+
+/**
+ * Tevona Dashboard Page
+ * - place as app/dashboard/page.tsx or app/page.tsx
+ * - requires: tailwindcss, framer-motion, recharts, lucide-react
+ */
+
+function useAnimatedCounter(target: number, duration = 900) {
+  const [value, setValue] = useState(0);
+  useEffect(() => {
+    let raf = 0;
+    const start = performance.now();
+    const step = (now: number) => {
+      const t = Math.min(1, (now - start) / duration);
+      setValue(Math.floor(target * t));
+      if (t < 1) raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [target, duration]);
+  return value;
+}
+
+function genInitialSeries(length = 24, base = 50, variance = 20) {
+  const arr = [];
+  for (let i = 0; i < length; i++) {
+    arr.push({
+      x: i,
+      y: Math.max(5, Math.round(base + (Math.random() - 0.5) * variance)),
+    });
+  }
+  return arr;
+}
+
+export default function DashboardPage() {
+  // Search
+  const [query, setQuery] = useState("");
+
+  // Tools
+  const tools = [
+    { id: "youtube", title: "YouTube", icon: <Youtube className="w-6 h-6" /> },
+    { id: "ephoto360", title: "Ephoto360", icon: <ImageIcon className="w-6 h-6" /> },
+    { id: "fancypdf", title: "FancyPDF", icon: <FileText className="w-6 h-6" /> },
+    { id: "spotify", title: "Spotify", icon: <Spotify className="w-6 h-6" /> },
+    { id: "encrypt", title: "Encrypt", icon: <Lock className="w-6 h-6" /> },
+    { id: "downloads", title: "Downloads", icon: <Download className="w-6 h-6" /> },
+  ];
+
+  // Stats & auto-data
+  const [monthSeries, setMonthSeries] = useState(() => genInitialSeries(20, 1200, 600));
+  const [weekSeries, setWeekSeries] = useState(() => genInitialSeries(14, 320, 150));
+  const [todaySeries, setTodaySeries] = useState(() => genInitialSeries(12, 48, 22));
+  const [apiSeries, setApiSeries] = useState(() => genInitialSeries(20, 380, 40));
+  const [pingHistory, setPingHistory] = useState(() => genInitialSeries(18, 60, 50));
+  const [showGraphFor, setShowGraphFor] = useState<string | null>(null);
+  const [ping, setPing] = useState(55);
+  const [uptimeStatus, setUptimeStatus] = useState(true);
+
+  // Counters (animated)
+  const monthCount = useAnimatedCounter(12400);
+  const weekCount = useAnimatedCounter(3560);
+  const todayCount = useAnimatedCounter(480);
+  // API requests dynamic target (start 391)
+  const [apiRequestsTarget, setApiRequestsTarget] = useState(391);
+  const apiCount = useAnimatedCounter(apiRequestsTarget);
+
+  // keep pinging (real or simulated). We'll simulate here but you can hook a real endpoint.
+  useEffect(() => {
+    const pingUrl = "/api/health"; // replace with your real health check endpoint if present
+    // simulate real ping: every 5s
+    const tick = async () => {
+      // simulate fetch and ping time (random)
+      const ms = Math.max(18, Math.round(40 + (Math.random() - 0.5) * 120));
+      setPing(ms);
+      setPingHistory((prev) => {
+        const next = prev.slice(-19);
+        next.push({ x: prev.length ? prev[prev.length - 1].x + 1 : 0, y: ms });
+        return next;
+      });
+      // randomly flip uptime to mimic checks
+      if (Math.random() < 0.03) setUptimeStatus(false);
+      else setUptimeStatus(true);
+    };
+
+    tick();
+    const id = setInterval(tick, 5000);
+    return () => clearInterval(id);
+  }, []);
+
+  // Grow API requests slowly over time to show "movie" feel
+  useEffect(() => {
+    const id = setInterval(() => {
+      setApiRequestsTarget((t) => t + Math.round(Math.random() * 3));
+      // add new points for the apiSeries to animate its chart
+      setApiSeries((prev) => {
+        const next = prev.slice(-19);
+        next.push({ x: prev.length ? prev[prev.length - 1].x + 1 : 0, y: Math.max(300, Math.round(350 + Math.random() * 120)) });
+        return next;
+      });
+    }, 1800);
+    return () => clearInterval(id);
+  }, []);
+
+  // small live growth for month/week/today
+  useEffect(() => {
+    const id = setInterval(() => {
+      setMonthSeries((p) => {
+        const q = p.slice(-19);
+        q.push({ x: p.length ? p[p.length - 1].x + 1 : 0, y: Math.round(1000 + Math.random() * 1000) });
+        return q;
+      });
+      setWeekSeries((p) => {
+        const q = p.slice(-13);
+        q.push({ x: p.length ? p[p.length - 1].x + 1 : 0, y: Math.round(200 + Math.random() * 300) });
+        return q;
+      });
+      setTodaySeries((p) => {
+        const q = p.slice(-11);
+        q.push({ x: p.length ? p[p.length - 1].x + 1 : 0, y: Math.round(30 + Math.random() * 90) });
+        return q;
+      });
+    }, 3000);
+    return () => clearInterval(id);
+  }, []);
+
+  // floating animation base
+  const floatVariants = {
+    rest: { y: 0 },
+    float: { y: -8 },
+  };
+
+  // filtered tools by search
+  const filteredTools = useMemo(() => {
+    if (!query) return tools;
+    const q = query.toLowerCase();
+    return tools.filter((t) => t.title.toLowerCase().includes(q));
+  }, [tools, query]);
+
+  return (
+    <main className="min-h-screen p-6 bg-gradient-to-br from-[#0b0512] via-[#14102a] to-[#071021] text-white">
+      {/* Header */}
+      <header className="max-w-6xl mx-auto mb-8">
+        <div className="flex items-start justify-between gap-6">
+          <div>
+            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight neon-glow">
+              TEVONA
+            </h1>
+            <div className="mt-2 flex items-center gap-3">
+              <motion.div
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6 }}
+                className="text-gray-300"
+              >
+                <AnimatedSubtitle />
+              </motion.div>
+              <div className="text-sm text-gray-400">• Your choice of tools & APIs</div>
+            </div>
+          </div>
+
+          <div className="w-full max-w-md">
+            <label className="text-xs text-gray-300">Search tools</label>
+            <div className="mt-2 flex items-center gap-2 bg-white/6 rounded-xl p-2">
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search (YouTube, Ephoto360, PDF...)"
+                className="flex-1 bg-transparent outline-none px-2 py-2 text-white placeholder:text-gray-400"
+              />
+              <button
+                onClick={() => setQuery("")}
+                className="px-3 py-1 rounded-lg bg-white/8 hover:bg-white/12 transition"
+                title="Clear"
+              >
+                Clear
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Tools grid + community */}
+      <section className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 grid grid-cols-2 md:grid-cols-3 gap-4">
+          {filteredTools.map((t, i) => (
+            <motion.button
+              key={t.id}
+              initial="rest"
+              whileHover="float"
+              animate="rest"
+              variants={floatVariants}
+              transition={{ y: { yoyo: Infinity, duration: 2 + i * 0.1 } }}
+              className="relative p-4 bg-gradient-to-tr from-white/5 to-white/3 rounded-2xl border border-white/8 hover:shadow-xl backdrop-blur-sm"
+              title={t.title}
+              onClick={() => {
+                // placeholder: navigate or open tool
+                window.alert(`Open ${t.title} — integrate API or route`);
+              }}
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-white/6 rounded-lg neon-button">{t.icon}</div>
+                <div>
+                  <div className="font-semibold">{t.title}</div>
+                  <div className="text-xs text-gray-400">Click to open</div>
+                </div>
+              </div>
+              <div className="absolute right-3 top-3 text-xs text-gray-400">API</div>
+            </motion.button>
+          ))}
+
+          {/* "All" button */}
+          <motion.div
+            whileHover={{ scale: 1.03 }}
+            className="p-4 flex items-center justify-center rounded-2xl border border-dashed border-white/8 bg-white/4"
+          >
+            <button
+              onClick={() => {
+                setQuery("");
+                window.alert("All tools selected (UI placeholder)");
+              }}
+              className="px-4 py-2 rounded-xl bg-gradient-to-r from-pink-500 via-yellow-400 to-blue-400 text-black font-semibold"
+            >
+              All Tools
+            </button>
+          </motion.div>
+        </div>
+
+        {/* Right column: community + quick stats */}
+        <aside className="space-y-4">
+          <div className="p-4 rounded-2xl bg-white/6 border border-white/8">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm text-gray-300">Community</div>
+                <div className="font-bold">Join our WhatsApp Channel & Group</div>
+              </div>
+              <Users className="w-8 h-8 text-green-300" />
+            </div>
+
+            <div className="mt-4 grid grid-cols-1 gap-2">
+              <a
+                href="https://whatsapp.com/channel/0029VbB8uytKrWQs4MGIQH17"
+                target="_blank"
+                rel="noreferrer"
+                className="block text-center py-2 rounded-lg bg-green-600/20 hover:bg-green-600/30"
+              >
+                Join Channel
+              </a>
+              <a
+                href="https://chat.whatsapp.com/GVdaxRDLVUcI1c6nDHGNtH?mode=ac_t"
+                target="_blank"
+                rel="noreferrer"
+                className="block text-center py-2 rounded-lg bg-green-600/20 hover:bg-green-600/30"
+              >
+                Join Group
+              </a>
+            </div>
+          </div>
+
+          {/* Small motivator / kill-switch to keep active */}
+          <div className="p-4 rounded-2xl bg-white/6 border border-white/8">
+            <div className="flex items-center justify-between mb-2">
+              <div>
+                <div className="text-xs text-gray-400">API Requests</div>
+                <div className="font-bold text-lg">{apiCount}+</div>
+                <div className="text-xs text-gray-400">Total requests · animated</div>
+              </div>
+              <Zap className="w-8 h-8 text-yellow-300" />
+            </div>
+            <div className="mt-3">
+              <button
+                onClick={() => setShowGraphFor((s) => (s === "api" ? null : "api"))}
+                className="text-xs px-3 py-1 rounded-lg bg-white/8"
+              >
+                {showGraphFor === "api" ? "Hide graph" : "See graph"}
+              </button>
+            </div>
+            {showGraphFor === "api" && (
+              <div className="mt-3 h-28">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={apiSeries}>
+                    <defs>
+                      <linearGradient id="colorApi" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#f97316" stopOpacity={0.6} />
+                        <stop offset="100%" stopColor="#f97316" stopOpacity={0.08} />
+                      </linearGradient>
+                    </defs>
+                    <Area dataKey="y" stroke="#f97316" fill="url(#colorApi)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </div>
+
+          {/* Uptime + Ping card */}
+          <div className={`p-4 rounded-2xl border ${uptimeStatus ? "border-green-400" : "border-red-500"} bg-white/4`}>
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-xs text-gray-300">Web Uptime</div>
+                <div className="font-bold">{uptimeStatus ? "Online" : "Offline"}</div>
+                <div className="text-xs text-gray-400">Ping: {ping} ms</div>
+              </div>
+              <Wifi className={`w-8 h-8 ${uptimeStatus ? "text-green-300" : "text-red-400"}`} />
+            </div>
+            <div className="mt-3">
+              <button
+                onClick={() => setShowGraphFor((s) => (s === "ping" ? null : "ping"))}
+                className="text-xs px-3 py-1 rounded-lg bg-white/8"
+              >
+                {showGraphFor === "ping" ? "Hide graph" : "See graph"}
+              </button>
+            </div>
+            {showGraphFor === "ping" && (
+              <div className="mt-3 h-24">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={pingHistory}>
+                    <Line dataKey="y" stroke={uptimeStatus ? "#34d399" : "#fb7185"} dot={false} strokeWidth={2} />
+                    <Tooltip />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </div>
+        </aside>
+      </section>
+
+      {/* Stats cards */}
+      <section className="max-w-6xl mx-auto mt-8 grid grid-cols-1 md:grid-cols-4 gap-6">
+        <StatCard
+          title="This Month"
+          subtitle="Visits"
+          value={monthCount}
+          onToggle={() => setShowGraphFor((s) => (s === "month" ? null : "month"))}
+          show={showGraphFor === "month"}
+          series={monthSeries}
+          color="#7c3aed"
+        />
+        <StatCard
+          title="This Week"
+          subtitle="Visits"
+          value={weekCount}
+          onToggle={() => setShowGraphFor((s) => (s === "week" ? null : "week"))}
+          show={showGraphFor === "week"}
+          series={weekSeries}
+          color="#06b6d4"
+        />
+        <StatCard
+          title="Today"
+          subtitle="Visits"
+          value={todayCount}
+          onToggle={() => setShowGraphFor((s) => (s === "today" ? null : "today"))}
+          show={showGraphFor === "today"}
+          series={todaySeries}
+          color="#f97316"
+        />
+        <StatCard
+          title="API Requests"
+          subtitle="Live"
+          value={apiCount}
+          onToggle={() => setShowGraphFor((s) => (s === "api2" ? null : "api2"))}
+          show={showGraphFor === "api2"}
+          series={apiSeries}
+          color="#f43f5e"
+        />
+      </section>
+
+      {/* Footer / HOW TO */}
+      <section className="max-w-6xl mx-auto mt-8 p-6 rounded-2xl bg-gradient-to-r from-white/2 to-white/3 border border-white/6">
+        <h3 className="font-bold text-xl mb-2">How to use</h3>
+        <ol className="text-sm text-gray-300 space-y-2 list-decimal list-inside">
+          <li>Search a tool in the search box or click one of the tool buttons.</li>
+          <li>Click a tool to open its page (placeholder now — integrate with your API routes).</li>
+          <li>Use the Community cards to join channel or group.</li>
+          <li>Click "See graph" on any stat card to view the live animated graph.</li>
+        </ol>
+      </section>
+    </main>
+  );
+}
+
+/* ---------- Helper components ---------- */
+
+function AnimatedSubtitle() {
+  const phrases = ["APIs on fire", "Stay connected", "Create without limits", "Build fast, ship faster"];
+  const [i, setI] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setI((v) => (v + 1) % phrases.length), 2600);
+    return () => clearInterval(id);
+  }, []);
+  return (
+    <motion.div
+      key={i}
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.45 }}
+      className="font-medium text-lg text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-yellow-300 to-cyan-300"
+    >
+      {phrases[i]}
+    </motion.div>
+  );
+}
+
+function StatCard({ title, subtitle, value, onToggle, show, series, color }) {
+  return (
+    <div className="p-4 rounded-2xl bg-white/5 border border-white/6">
+      <div className="flex items-start justify-between">
+        <div>
+          <div className="text-xs text-gray-400">{subtitle}</div>
+          <div className="font-bold text-lg">{title}</div>
+        </div>
+        <div className="text-right">
+          <div className="text-2xl font-extrabold">{value}</div>
+          <div className="text-xs text-gray-400">animated</div>
+        </div>
+      </div>
+
+      <div className="mt-3 flex items-center justify-between">
+        <button onClick={onToggle} className="px-3 py-1 rounded-lg bg-white/8 text-xs">
+          {show ? "Hide graph" : "See graph"}
+        </button>
+        <div className="text-xs text-gray-400">spark</div>
+      </div>
+
+      {show && (
+        <div className="mt-3 h-28">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={series}>
+              <Line type="monotone" dataKey="y" stroke={color} dot={false} strokeWidth={2} />
+              <XAxis dataKey="x" hide />
+              <YAxis hide />
+              <Tooltip />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+    </div>
+  );
