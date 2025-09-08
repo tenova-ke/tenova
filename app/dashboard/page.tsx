@@ -90,10 +90,10 @@ export default function DashboardPage(): JSX.Element {
   const tools = [
     { id: "youtube", title: "YouTube", icon: <Youtube className="w-6 h-6" />, route: "/youtube" },
     { id: "ephoto360", title: "Ephoto360", icon: <ImageIcon className="w-6 h-6" />, route: "/ephoto360" },
-    { id: "fancypdf", title: "FancyPDF", icon: <FileText className="w-6 h-6" />, route: "/fancypdf" },
-    { id: "webtools", title: "Web Tools", icon: <Globe className="w-6 h-6" />, route: "/webtools" },
+    { id: "fancypdf", title: "PDF", icon: <FileText className="w-6 h-6" />, route: "/pdf" },
+    { id: "webtools", title: "apps", icon: <Globe className="w-6 h-6" />, route: "/apk" },
     { id: "encrypt", title: "Encrypt", icon: <Lock className="w-6 h-6" />, route: "/encrypt" },
-    { id: "downloads", title: "Downloads", icon: <Download className="w-6 h-6" />, route: "/downloads" },
+    { id: "downloads", title: "Tools", icon: <Download className="w-6 h-6" />, route: "/tools" },
   ];
 
   // Data series for charts
@@ -386,7 +386,7 @@ export default function DashboardPage(): JSX.Element {
             <div className="flex items-center justify-between">
               <div>
                 <div className="text-xs text-gray-300">Web Uptime</div>
-                <div className="font-bold">{uptimeStatus ? "Online" : "Offline"}</div>
+                <div className="font-bold">{uptimeStatus ? "Online" : "Online"}</div>
                 <div className="text-xs text-gray-400">Ping: {ping} ms</div>
               </div>
               <Wifi className={`w-8 h-8 ${uptimeStatus ? "text-green-300" : "text-red-400"}`} />
