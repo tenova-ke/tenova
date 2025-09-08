@@ -461,3 +461,4 @@ function StatCard({ title, subtitle, value, onToggle, show, series, color }) {
       )}
     </div>
   );
+      }
