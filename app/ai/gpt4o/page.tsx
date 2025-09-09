@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Send, Copy, Share2, User, Robot } from "lucide-react";
+import { Send, Copy, Share2, User, Bot } from "lucide-react";
 
 /**
  * GPT4o chat page (client)
@@ -33,41 +33,38 @@ export default function GPTPage(): JSX.Element {
     const trimmed = input.trim();
     if (!trimmed) return;
 
-    // explicitly type message so TypeScript knows the literal role type
     const userMessage: Message = { role: "user", content: trimmed };
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setLoading(true);
 
     try {
-      // call Siputzx GPT-4o endpoint
       const res = await fetch(
         "https://api.siputzx.my.id/api/ai/gpt-4o?text=" + encodeURIComponent(trimmed),
         { method: "GET", cache: "no-store" }
       );
 
-      // Defensive parsing: many endpoints return JSON { result: "..."} or { data: {...} }
       let resultText = "No response received.";
       try {
         const json = await res.json();
-        // prefer common keys
-        resultText = (json.result ?? json.output ?? json.text ?? json.data ?? "").toString() || resultText;
+        resultText =
+          (json.result ?? json.output ?? json.text ?? json.data ?? "").toString() ||
+          resultText;
       } catch {
-        // if not JSON, try plain text
         try {
           resultText = await res.text();
         } catch {
-          // ignore - fallback message remains
+          /* fallback keep default */
         }
       }
 
       const aiMessage: Message = { role: "ai", content: resultText };
       setMessages((prev) => [...prev, aiMessage]);
     } catch (err) {
-      const errMsg = "❌ Error fetching AI response.";
-      setMessages((prev) => [...prev, { role: "ai", content: errMsg }]);
-      // optional: you could also record the error in console
-      // console.error("GPT fetch error", err);
+      setMessages((prev) => [
+        ...prev,
+        { role: "ai", content: "❌ Error fetching AI response." },
+      ]);
     } finally {
       setLoading(false);
     }
@@ -77,13 +74,12 @@ export default function GPTPage(): JSX.Element {
   async function copyText(text: string) {
     try {
       await navigator.clipboard.writeText(text);
-      // optionally show a tiny toast in your app
     } catch {
-      // fallback: do nothing or alert
+      /* ignore */
     }
   }
 
-  // Detect code blocks (``` ... ```)
+  // Detect code blocks
   function extractCodeBlocks(text: string) {
     const regex = /```(?:\w*\n)?([\s\S]*?)```/g;
     let match;
@@ -122,24 +118,20 @@ export default function GPTPage(): JSX.Element {
                     : "bg-gray-800 text-gray-100 rounded-bl-none"
                 }`}
               >
-                {/* Avatar only shown for the latest AI or for user messages if you'd like */}
                 {isLatestAI && (
                   <div className="flex items-center gap-2 mb-1">
-                    <Robot size={18} />
+                    <Bot size={18} />
                     <span className="text-xs opacity-70">AI</span>
                   </div>
                 )}
 
-                {/* Content */}
                 <div>{m.content}</div>
 
-                {/* Controls only on the latest AI message */}
                 {isLatestAI && (
                   <div className="mt-2 flex flex-wrap gap-2">
                     <button
                       onClick={() => copyText(m.content)}
                       className="text-xs flex items-center gap-1 px-2 py-1 bg-white/10 rounded hover:bg-white/20"
-                      title="Copy entire response"
                     >
                       <Copy size={14} /> Copy All
                     </button>
@@ -149,7 +141,6 @@ export default function GPTPage(): JSX.Element {
                         key={idx}
                         onClick={() => copyText(block)}
                         className="text-xs flex items-center gap-1 px-2 py-1 bg-white/10 rounded hover:bg-white/20"
-                        title={`Copy code block ${idx + 1}`}
                       >
                         <Copy size={14} /> Copy Code {idx + 1}
                       </button>
@@ -163,7 +154,6 @@ export default function GPTPage(): JSX.Element {
                         })
                       }
                       className="text-xs flex items-center gap-1 px-2 py-1 bg-white/10 rounded hover:bg-white/20"
-                      title="Share"
                     >
                       <Share2 size={14} /> Share
                     </button>
@@ -202,4 +192,4 @@ export default function GPTPage(): JSX.Element {
       </div>
     </main>
   );
-}
+  }
