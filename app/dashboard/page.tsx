@@ -36,11 +36,7 @@ import {
  * - Place as app/dashboard/page.tsx
  * - Requires: tailwindcss, framer-motion, recharts, lucide-react
  *
- * Changes in this file:
- *  - uptime display fixed (Online / Offline)
- *  - doPing uses resp.ok and optionally checks JSON { status: 'ok' } if returned
- *  - added extra tool tiles (Spotify, Music, Fancy, Videos, Binary, Games) below existing grid
- *  - clicking a tile uses router.push to internal routes (no popups)
+ * This is a complete file (TSX). Drop it into app/dashboard/page.tsx and it should compile.
  */
 
 /* ----------------- Utilities & Types ----------------- */
@@ -154,11 +150,10 @@ export default function DashboardPage(): JSX.Element {
         const ms = Math.max(1, Math.round(performance.now() - start));
         if (!mounted) return;
 
-        // determine online status: prefer resp.ok, but also accept JSON {status:'ok'}
+        // determine online status: prefer resp.ok, but also accept JSON {status:'ok'} or {success:true}
         let online = resp.ok;
         try {
           const txt = await resp.text();
-          // attempt to parse JSON - but don't fail if it's not JSON
           try {
             const parsed = JSON.parse(txt);
             if (parsed && (parsed.status === "ok" || parsed.success === true)) {
@@ -292,6 +287,7 @@ export default function DashboardPage(): JSX.Element {
               className="flex-1 bg-transparent outline-none px-2 py-2 text-white placeholder:text-gray-400"
             />
             <button
+              type="button"
               onClick={() => setQuery("")}
               className="px-3 py-1 rounded-lg bg-white/8 hover:bg-white/12 transition"
               title="Clear"
@@ -436,7 +432,6 @@ export default function DashboardPage(): JSX.Element {
 
               <button
                 onClick={() => {
-                  // manual ping now (trigger by fetching)
                   (async () => {
                     try {
                       await fetch(`${PING_URL}?_t=${Date.now()}`, { cache: "no-store" });
@@ -511,7 +506,9 @@ export default function DashboardPage(): JSX.Element {
         <ol className="text-sm text-gray-300 space-y-2 list-decimal list-inside">
           <li>Search a tool in the search box or click one of the tool buttons.</li>
           <li>Click a tool to navigate to its dedicated page (no popups).</li>
-          <li>The ping card checks <code>{PING_URL}</code> every 5 seconds to measure latency; it sets Online only if the endpoint responds OK (or returns JSON with <code>status: "ok"</code>).</li>
+          <li>
+            The ping card checks <code>{PING_URL}</code> every 5 seconds to measure latency; it sets Online only if the endpoint responds OK or returns JSON with <code>status: "ok"</code> or <code>success: true</code>.
+          </li>
           <li>Click "See graph" on any stat card to view the live animated graph.</li>
         </ol>
       </section>
@@ -542,4 +539,9 @@ function AnimatedSubtitle(): JSX.Element {
   );
 }
 
-function StatCard({ title, subtitle, value, onToggle, show, serie
+function StatCard({ title, subtitle, value, onToggle, show, series, color }: StatCardProps): JSX.Element {
+  return (
+    <div className="p-4 rounded-2xl bg-white/5 border border-white/6">
+      <div className="flex items-start justify-between">
+        <div>
+          <div className="text-xs text-gray-400">{subtitle}</
