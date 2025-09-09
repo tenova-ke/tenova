@@ -1,50 +1,91 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Send, Copy, Share2, User, Bot } from "lucide-react";
+import { Send, Copy, Share2, User, Robot } from "lucide-react";
 
-export default function GPTPage() {
-  const [messages, setMessages] = useState<{ role: "user" | "ai"; content: string }[]>([]);
+/**
+ * GPT4o chat page (client)
+ * - Fixed TypeScript message typing issue
+ * - Latest AI message shows controls (Copy All, Copy Code blocks, Share)
+ * - Scrolls to latest automatically
+ *
+ * Place this file at: app/ai/gpt4o/page.tsx
+ */
+
+type Message = {
+  role: "user" | "ai";
+  content: string;
+  id?: string; // optional, useful if you want keys
+};
+
+export default function GPTPage(): JSX.Element {
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const chatEndRef = useRef<HTMLDivElement>(null);
+  const chatEndRef = useRef<HTMLDivElement | null>(null);
 
-  // Scroll to latest
+  // Scroll to latest message
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   async function sendMessage() {
-    if (!input.trim()) return;
-    const userMessage = { role: "user", content: input };
+    const trimmed = input.trim();
+    if (!trimmed) return;
+
+    // explicitly type message so TypeScript knows the literal role type
+    const userMessage: Message = { role: "user", content: trimmed };
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setLoading(true);
 
     try {
-      const res = await fetch("https://api.siputzx.my.id/api/ai/gpt-4o?text=" + encodeURIComponent(input));
-      const data = await res.json();
+      // call Siputzx GPT-4o endpoint
+      const res = await fetch(
+        "https://api.siputzx.my.id/api/ai/gpt-4o?text=" + encodeURIComponent(trimmed),
+        { method: "GET", cache: "no-store" }
+      );
 
-      const aiMessage = {
-        role: "ai",
-        content: data.result || "No response received.",
-      };
+      // Defensive parsing: many endpoints return JSON { result: "..."} or { data: {...} }
+      let resultText = "No response received.";
+      try {
+        const json = await res.json();
+        // prefer common keys
+        resultText = (json.result ?? json.output ?? json.text ?? json.data ?? "").toString() || resultText;
+      } catch {
+        // if not JSON, try plain text
+        try {
+          resultText = await res.text();
+        } catch {
+          // ignore - fallback message remains
+        }
+      }
+
+      const aiMessage: Message = { role: "ai", content: resultText };
       setMessages((prev) => [...prev, aiMessage]);
     } catch (err) {
-      setMessages((prev) => [...prev, { role: "ai", content: "❌ Error fetching AI response." }]);
+      const errMsg = "❌ Error fetching AI response.";
+      setMessages((prev) => [...prev, { role: "ai", content: errMsg }]);
+      // optional: you could also record the error in console
+      // console.error("GPT fetch error", err);
     } finally {
       setLoading(false);
     }
   }
 
   // Clipboard copy
-  function copyText(text: string) {
-    navigator.clipboard.writeText(text);
+  async function copyText(text: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+      // optionally show a tiny toast in your app
+    } catch {
+      // fallback: do nothing or alert
+    }
   }
 
   // Detect code blocks (``` ... ```)
   function extractCodeBlocks(text: string) {
-    const regex = /```([\s\S]*?)```/g;
+    const regex = /```(?:\w*\n)?([\s\S]*?)```/g;
     let match;
     const blocks: string[] = [];
     while ((match = regex.exec(text)) !== null) {
@@ -53,7 +94,8 @@ export default function GPTPage() {
     return blocks;
   }
 
-  const latestMessage = messages[messages.length - 1];
+  const latestIndex = messages.length - 1;
+  const latestMessage = latestIndex >= 0 ? messages[latestIndex] : null;
 
   return (
     <main className="min-h-screen flex flex-col bg-gradient-to-b from-gray-950 to-gray-900 text-white">
@@ -65,49 +107,54 @@ export default function GPTPage() {
       {/* Chat area */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {messages.map((m, i) => {
-          const isLatest = i === messages.length - 1 && m.role === "ai";
+          const isLatestAI = i === latestIndex && m.role === "ai";
+          const isUser = m.role === "user";
+
           return (
             <div
-              key={i}
-              className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
+              key={m.id ?? i}
+              className={`flex ${isUser ? "justify-end" : "justify-start"}`}
             >
               <div
                 className={`max-w-[80%] p-3 rounded-lg text-sm leading-relaxed whitespace-pre-wrap ${
-                  m.role === "user"
+                  isUser
                     ? "bg-blue-600/80 text-white rounded-br-none"
                     : "bg-gray-800 text-gray-100 rounded-bl-none"
                 }`}
               >
-                {/* Avatar only on latest */}
-                {isLatest && (
+                {/* Avatar only shown for the latest AI or for user messages if you'd like */}
+                {isLatestAI && (
                   <div className="flex items-center gap-2 mb-1">
-                    {m.role === "ai" ? <Bot size={18} /> : <User size={18} />}
-                    <span className="text-xs opacity-70">
-                      {m.role === "ai" ? "AI" : "You"}
-                    </span>
+                    <Robot size={18} />
+                    <span className="text-xs opacity-70">AI</span>
                   </div>
                 )}
 
-                {m.content}
+                {/* Content */}
+                <div>{m.content}</div>
 
-                {/* Controls only on latest AI message */}
-                {isLatest && (
-                  <div className="mt-2 flex gap-2">
+                {/* Controls only on the latest AI message */}
+                {isLatestAI && (
+                  <div className="mt-2 flex flex-wrap gap-2">
                     <button
                       onClick={() => copyText(m.content)}
                       className="text-xs flex items-center gap-1 px-2 py-1 bg-white/10 rounded hover:bg-white/20"
+                      title="Copy entire response"
                     >
                       <Copy size={14} /> Copy All
                     </button>
+
                     {extractCodeBlocks(m.content).map((block, idx) => (
                       <button
                         key={idx}
                         onClick={() => copyText(block)}
                         className="text-xs flex items-center gap-1 px-2 py-1 bg-white/10 rounded hover:bg-white/20"
+                        title={`Copy code block ${idx + 1}`}
                       >
                         <Copy size={14} /> Copy Code {idx + 1}
                       </button>
                     ))}
+
                     <button
                       onClick={() =>
                         navigator.share?.({
@@ -116,6 +163,7 @@ export default function GPTPage() {
                         })
                       }
                       className="text-xs flex items-center gap-1 px-2 py-1 bg-white/10 rounded hover:bg-white/20"
+                      title="Share"
                     >
                       <Share2 size={14} /> Share
                     </button>
@@ -125,6 +173,7 @@ export default function GPTPage() {
             </div>
           );
         })}
+
         {loading && <div className="text-gray-400 text-sm">AI is typing...</div>}
         <div ref={chatEndRef} />
       </div>
@@ -134,14 +183,19 @@ export default function GPTPage() {
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              sendMessage();
+            }
+          }}
           placeholder="Type your question..."
           className="flex-1 px-3 py-2 rounded-lg bg-gray-800 text-white outline-none"
         />
         <button
           onClick={sendMessage}
           disabled={loading}
-          className="px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-500 flex items-center gap-1"
+          className="px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-500 flex items-center gap-1 disabled:opacity-50"
         >
           <Send size={16} /> Send
         </button>
