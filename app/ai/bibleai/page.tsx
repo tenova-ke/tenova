@@ -3,11 +3,11 @@
 import { useState, useRef, useEffect } from "react";
 import { Send, Copy, Share2, User, BookOpenText } from "lucide-react";
 
-// Helper: highlight Bible verses with glow
+// ✅ Helper: highlight Bible verses with glow
 function highlightVerses(text: string) {
   const verseRegex = /\b([1-3]?\s?[A-Za-z]+\s?\d+:\d+)\b/g;
   return text.split(verseRegex).map((part, i) => {
-    if (verseRegex.test(part)) {
+    if (part.match(verseRegex)) {
       return (
         <span
           key={i}
@@ -21,8 +21,13 @@ function highlightVerses(text: string) {
   });
 }
 
+type Message = {
+  role: "user" | "ai";
+  content: string;
+};
+
 export default function BibleAIPage() {
-  const [messages, setMessages] = useState<{ role: "user" | "ai"; content: string }[]>([
+  const [messages, setMessages] = useState<Message[]>([
     { role: "ai", content: "✝️ Praise the Lord Jesus Christ. How may I help you today?" },
   ]);
   const [input, setInput] = useState("");
@@ -35,7 +40,8 @@ export default function BibleAIPage() {
 
   async function sendMessage() {
     if (!input.trim()) return;
-    const userMessage = { role: "user", content: input };
+
+    const userMessage: Message = { role: "user", content: input };
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setLoading(true);
@@ -46,7 +52,7 @@ export default function BibleAIPage() {
       );
       const data = await res.json();
 
-      const aiMessage = {
+      const aiMessage: Message = {
         role: "ai",
         content: data.result || "No response received.",
       };
@@ -65,7 +71,7 @@ export default function BibleAIPage() {
     navigator.clipboard.writeText(text);
   }
 
-  // Extract Bible verses for quick-copy chips
+  // ✅ Extract Bible verses for quick-copy chips
   function extractVerses(text: string) {
     const regex = /\b([1-3]?\s?[A-Za-z]+\s?\d+:\d+)\b/g;
     return [...text.matchAll(regex)].map((m) => m[0]);
@@ -77,7 +83,7 @@ export default function BibleAIPage() {
     <main className="min-h-screen flex flex-col bg-gradient-to-b from-[#0b0512] to-[#14102a] text-white">
       {/* Header */}
       <header className="p-4 border-b border-white/10 text-center text-lg font-bold">
-        Bible AI (powered by Siputzx API)
+        ✝️ Bible AI (powered by Siputzx API)
       </header>
 
       {/* Chat */}
@@ -85,6 +91,7 @@ export default function BibleAIPage() {
         {messages.map((m, i) => {
           const isLatest = i === messages.length - 1 && m.role === "ai";
           const verses = m.role === "ai" ? extractVerses(m.content) : [];
+
           return (
             <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
               <div
@@ -94,7 +101,7 @@ export default function BibleAIPage() {
                     : "bg-gray-800 text-gray-100 rounded-bl-none"
                 }`}
               >
-                {/* Avatar only on latest */}
+                {/* Avatar only on latest AI message */}
                 {isLatest && (
                   <div className="flex items-center gap-2 mb-1">
                     {m.role === "ai" ? <BookOpenText size={18} /> : <User size={18} />}
@@ -146,6 +153,7 @@ export default function BibleAIPage() {
             </div>
           );
         })}
+
         {loading && <div className="text-gray-400 text-sm">Bible AI is thinking...</div>}
         <div ref={chatEndRef} />
       </div>
@@ -169,4 +177,4 @@ export default function BibleAIPage() {
       </div>
     </main>
   );
-}
+                                     }
