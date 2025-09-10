@@ -1,0 +1,32 @@
+name: Keep Tevona Alive
+
+on:
+  # schedule in UTC; runs every 15 minutes
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch: # manual run
+
+jobs:
+  keepalive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping keepalive endpoint (3 tries)
+        env:
+          KEEPALIVE_URL: ${{ secrets.RENDER_KEEPALIVE_URL }}
+        run: |
+          if [ -z "$KEEPALIVE_URL" ]; then
+            echo "ERROR: KEEPALIVE_URL secret is not set"
+            exit 1
+          fi
+          echo "Pinging $KEEPALIVE_URL"
+          for i in 1 2 3; do
+            status=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "$KEEPALIVE_URL" || echo "000")
+            echo "Attempt $i -> HTTP $status"
+            if [ "$status" = "200" ] || [ "$status" = "204" ]; then
+              echo "OK"
+              exit 0
+            fi
+            sleep 3
+          done
+          echo "Failed to reach $KEEPALIVE_URL"
+          exit 1
