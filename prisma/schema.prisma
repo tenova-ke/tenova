@@ -1,0 +1,22 @@
+model Feedback {
+  id        String     @id @default(uuid())
+  name      String?
+  email     String?
+  phone     String?
+  message   String
+  createdAt DateTime   @default(now())
+
+  // Relation: one feedback can have many replies
+  replies   Reply[]
+}
+
+model Reply {
+  id          String    @id @default(uuid())
+  feedbackId  String
+  message     String
+  createdAt   DateTime  @default(now())
+  fromAdmin   Boolean   @default(true)
+
+  // Relation back to Feedback
+  feedback    Feedback  @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
+}
