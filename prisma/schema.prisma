@@ -4,24 +4,38 @@ generator client {
 
 datasource db {
   provider = "sqlite"
-  url      = env("DATABASE_URL")
-}
-
-model User {
-  id        String     @id @default(uuid())
-  name      String?
-  email     String?
-  phone     String?
-  createdAt DateTime   @default(now())
-  feedbacks Feedback[]
+  url      = "file:./dev.db"
 }
 
 model Feedback {
-  id        String     @id @default(uuid())
+  id        String  @id @default(uuid())
   userId    String
-  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String?
+  email     String?
+  phone     String?
   message   String
-  reply     String?
-  createdAt DateTime   @default(now())
-  expiresAt DateTime   @default(dbgenerated("datetime('now', '+7 days')")) // auto-expire
+  createdAt DateTime @default(now())
+
+  replies   Reply[]
+  @@index([createdAt])
+}
+
+model Reply {
+  id         String   @id @default(uuid())
+  feedback   Feedback @relation(fields: [feedbackId], references: [id])
+  feedbackId String
+  message    String
+  fromAdmin  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+model ChatMessage {
+  id        String   @id @default(uuid())
+  userId    String
+  message   String
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
 }
