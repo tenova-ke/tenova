@@ -4,6 +4,9 @@ import { useState, useEffect } from "react";
 import { Send, Copy, CheckCircle } from "lucide-react";
 import axios from "axios";
 import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime"; // ✅ import plugin
+
+dayjs.extend(relativeTime); // ✅ enable plugin
 
 interface Feedback {
   id: string;
@@ -18,7 +21,6 @@ export default function FeedbackPage() {
   const [recent, setRecent] = useState<Feedback[]>([]);
 
   useEffect(() => {
-    // fetch recent feedbacks
     const fetchRecent = async () => {
       try {
         const res = await axios.get("/api/feedback/recent");
