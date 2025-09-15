@@ -1,21 +1,27 @@
-model Feedback {
-  id        String   @id @default(uuid())
-  userId    String   // permanent ID per user (so same user always tracked)
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String     @id @default(uuid())
   name      String?
   email     String?
   phone     String?
-  message   String
-  createdAt DateTime @default(now())
-
-  replies   Reply[]
+  createdAt DateTime   @default(now())
+  feedbacks Feedback[]
 }
 
-model Reply {
-  id         String   @id @default(uuid())
-  feedbackId String
-  message    String
-  fromAdmin  Boolean  @default(true)
-  createdAt  DateTime @default(now())
-
-  feedback   Feedback @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
+model Feedback {
+  id        String     @id @default(uuid())
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  message   String
+  reply     String?
+  createdAt DateTime   @default(now())
+  expiresAt DateTime   @default(dbgenerated("datetime('now', '+7 days')")) // auto-expire
 }
