@@ -1,22 +1,21 @@
 model Feedback {
-  id        String     @id @default(uuid())
+  id        String   @id @default(uuid())
+  userId    String   // permanent ID per user (so same user always tracked)
   name      String?
   email     String?
   phone     String?
   message   String
-  createdAt DateTime   @default(now())
+  createdAt DateTime @default(now())
 
-  // Relation: one feedback can have many replies
   replies   Reply[]
 }
 
 model Reply {
-  id          String    @id @default(uuid())
-  feedbackId  String
-  message     String
-  createdAt   DateTime  @default(now())
-  fromAdmin   Boolean   @default(true)
+  id         String   @id @default(uuid())
+  feedbackId String
+  message    String
+  fromAdmin  Boolean  @default(true)
+  createdAt  DateTime @default(now())
 
-  // Relation back to Feedback
-  feedback    Feedback  @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
+  feedback   Feedback @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
 }
