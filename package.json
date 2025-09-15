@@ -9,11 +9,16 @@
     "lint": "next lint",
     "format": "prettier --write .",
     "prepare": "husky install",
-
     "prisma:generate": "prisma generate",
     "prisma:studio": "prisma studio",
-    "prisma:migrate": "prisma migrate dev --name init_feedback",
-    "prisma:deploy": "prisma migrate deploy"
+    "prisma:migrate:feedback": "prisma migrate dev --name init_feedback",
+    "prisma:migrate:reply": "prisma migrate dev --name init_reply",
+    "prisma:migrate:chat": "prisma migrate dev --name init_chat",
+    "prisma:deploy": "prisma migrate deploy",
+    "db:reset": "prisma migrate reset --force",
+    "db:seed": "prisma db seed",
+    "build:ci": "npm ci && npm run build",
+    "build:clean": "rm -rf .next && npm run build"
   },
   "dependencies": {
     "@prisma/client": "^5.20.0",
@@ -71,4 +76,4 @@
   "engines": {
     "node": ">=18 <=20"
   }
-}
+  }
