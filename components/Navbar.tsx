@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { Menu, X, Folder } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -114,11 +115,16 @@ export default function Navbar() {
                   <motion.li
                     key={item}
                     whileHover={{ x: 8, scale: 1.02 }}
-                    className="flex items-center gap-3 cursor-pointer 
-                      text-gray-300 hover:text-pink-400 transition"
+                    className="flex items-center gap-3"
                   >
-                    <Folder size={18} className="text-pink-400" />
-                    {item.charAt(0).toUpperCase() + item.slice(1)}
+                    <Link
+                      href={`/${item}`}
+                      onClick={() => setIsOpen(false)} // auto-close sidebar after navigation
+                      className="flex items-center gap-3 text-gray-300 hover:text-pink-400 transition"
+                    >
+                      <Folder size={18} className="text-pink-400" />
+                      {item.charAt(0).toUpperCase() + item.slice(1)}
+                    </Link>
                   </motion.li>
                 ))}
               </ul>
