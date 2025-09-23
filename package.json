@@ -56,7 +56,6 @@
 
     "@tsparticles/engine": "^3.5.0",
     "@tsparticles/react": "^3.0.0",
-    "@tsparticles/full": "^3.5.0"
   },
   "optionalDependencies": {
     "osx-temperature-sensor": "^1.0.7"
