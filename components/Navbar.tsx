@@ -22,7 +22,7 @@ const menuItems = [
   "instagram",
   "music",
   "pdf",
-  "pintrest",
+  "pinterest",
   "song",
   "spotify",
   "tiktok",
