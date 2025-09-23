@@ -2,7 +2,8 @@
 
 import React from "react";
 import Particles from "react-tsparticles";
-import { loadFull } from "tsparticles-engine"; // ✅ fixed import
+import { loadFull } from "tsparticles";           // ✅ FIXED import
+import type { Engine } from "tsparticles-engine"; // ✅ type import
 import { motion } from "framer-motion";
 import { TypeAnimation } from "react-type-animation";
 import ReactPlayer from "react-player";
@@ -22,7 +23,8 @@ import {
 } from "lucide-react";
 
 export default function SupportOpportunitiesPage() {
-  const particlesInit = async (main: any) => {
+  // explicitly type main as Engine
+  const particlesInit = async (main: Engine) => {
     await loadFull(main);
   };
 
@@ -30,9 +32,7 @@ export default function SupportOpportunitiesPage() {
     `https://wa.me/254758476795?text=${encodeURIComponent(text)}`;
 
   const ctas = {
-    support: wa(
-      "Hi Tevona, I want to support Tevona. How can I help?"
-    ),
+    support: wa("Hi Tevona, I want to support Tevona. How can I help?"),
     submitAd: wa(
       "Hello Tevona, I want to submit an image/video banner for advertising. Please advise."
     ),
@@ -128,7 +128,12 @@ Yes. We build websites, APIs and automation. Send a short CV or project brief to
       {/* Page content */}
       <section className="relative z-10 max-w-6xl mx-auto px-6">
         {/* Hero */}
-        {/* ... keep the rest of your JSX unchanged from your last version ... */}
+        {/* ... keep your hero + pricing content here ... */}
+
+        {/* FAQ */}
+        <div className="mt-12 bg-slate-800/40 rounded-2xl p-6">
+          <ReactMarkdown className="prose prose-invert">{faqMd}</ReactMarkdown>
+        </div>
 
         {/* Footer */}
         <footer className="mt-12 text-center text-slate-400">
@@ -140,4 +145,4 @@ Yes. We build websites, APIs and automation. Send a short CV or project brief to
       </section>
     </main>
   );
-  }
+      }
