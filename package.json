@@ -54,9 +54,9 @@
     "zustand": "^4.5.5",
     "prisma": "^5.20.0",
 
-    "@tsparticles/engine": "^2.12.2",
-    "@tsparticles/react": "^2.12.2",
-    "@tsparticles/full": "^2.12.2"
+    "@tsparticles/engine": "^3.5.0",
+    "@tsparticles/react": "^3.0.0",
+    "@tsparticles/full": "^3.5.0"
   },
   "optionalDependencies": {
     "osx-temperature-sensor": "^1.0.7"
