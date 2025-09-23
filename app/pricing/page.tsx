@@ -1,9 +1,9 @@
 "use client";
 
 import React from "react";
-import Particles from "react-tsparticles";
-import { loadFull } from "tsparticles";           // ✅ FIXED import
-import type { Engine } from "tsparticles-engine"; // ✅ type import
+import Particles from "@tsparticles/react"; // ✅ new import
+import { loadAll } from "@tsparticles/all"; // ✅ v3+
+import type { Engine } from "@tsparticles/engine"; // ✅ v3 typing
 import { motion } from "framer-motion";
 import { TypeAnimation } from "react-type-animation";
 import ReactPlayer from "react-player";
@@ -24,8 +24,8 @@ import {
 
 export default function SupportOpportunitiesPage() {
   // explicitly type main as Engine
-  const particlesInit = async (main: Engine) => {
-    await loadFull(main);
+  const particlesInit = async (engine: Engine) => {
+    await loadAll(engine);
   };
 
   const wa = (text: string) =>
@@ -75,6 +75,17 @@ export default function SupportOpportunitiesPage() {
       title: "Hire Tevona Devs",
       desc: "Need a site, tool or automation? Send your brief — we build product-ready apps.",
     },
+    {
+      icon: <Phone className="w-7 h-7 text-white" />,
+      title: "Contact & Socials",
+      desc: `📞 +254758476795  
+📧 tevona09@gmail.com  
+💬 WhatsApp: wa.me/254758476795  
+🌐 Facebook: tracker wanga  
+📸 Instagram: trackerwanga  
+🎵 TikTok: trackerwanga  
+🐦 Twitter: trackerwanga`,
+    },
   ];
 
   const faqMd = `
@@ -90,7 +101,7 @@ Send your image or short video to WhatsApp at +254758476795 and include your pre
 M-Pesa (0758476795), PayPal (contact us), or direct support via WhatsApp.
 
 **Do you offer custom development?**  
-Yes. We build websites, APIs and automation. Send a short CV or project brief to tevona@gmail.com or WhatsApp us.
+Yes. We build websites, APIs and automation. Send a short CV or project brief to tevona09@gmail.com or WhatsApp us.
 `;
 
   return (
@@ -108,7 +119,7 @@ Yes. We build websites, APIs and automation. Send a short CV or project brief to
             shape: { type: "circle" },
             opacity: { value: 0.7 },
             size: { value: { min: 1, max: 4 } },
-            move: { enable: true, speed: 1.2, outMode: "bounce" },
+            move: { enable: true, speed: 1.2, outModes: "bounce" },
             links: {
               enable: true,
               distance: 140,
@@ -128,7 +139,39 @@ Yes. We build websites, APIs and automation. Send a short CV or project brief to
       {/* Page content */}
       <section className="relative z-10 max-w-6xl mx-auto px-6">
         {/* Hero */}
-        {/* ... keep your hero + pricing content here ... */}
+        <header className="text-center mb-12">
+          <motion.h1
+            className="text-4xl md:text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400"
+            initial={{ opacity: 0, y: -30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+          >
+            Support Tevona & Unlock Opportunities
+          </motion.h1>
+          <p className="mt-4 text-lg text-slate-300 max-w-2xl mx-auto">
+            Free tools, coding lessons, APIs, automation & more.  
+            Help us grow by supporting, sharing, or hiring us.
+          </p>
+        </header>
+
+        {/* Features grid */}
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {features.map((f, i) => (
+            <motion.div
+              key={i}
+              className="bg-slate-800/50 p-6 rounded-2xl shadow-lg hover:bg-slate-700/50 transition"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.1 }}
+            >
+              {f.icon}
+              <h3 className="mt-4 text-xl font-semibold">{f.title}</h3>
+              <p className="mt-2 text-slate-300 whitespace-pre-line">
+                {f.desc}
+              </p>
+            </motion.div>
+          ))}
+        </div>
 
         {/* FAQ */}
         <div className="mt-12 bg-slate-800/40 rounded-2xl p-6">
@@ -145,4 +188,4 @@ Yes. We build websites, APIs and automation. Send a short CV or project brief to
       </section>
     </main>
   );
-      }
+             }
