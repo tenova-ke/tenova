@@ -8,7 +8,7 @@ type Video = {
   videoId: string;
   title: string;
   thumbnail: string;
-  duration: string;
+  duration?: string;
 };
 
 export default function MusicPage() {
@@ -21,7 +21,11 @@ export default function MusicPage() {
     if (!query) return;
     setLoading(true);
     try {
-      const res = await axios.get(`/api/youtube/search?q=${encodeURIComponent(query)}`);
+      const res = await axios.get(
+        `https://api.giftedtech.co.ke/api/search/yts?apikey=gifted&query=${encodeURIComponent(
+          query
+        )}`
+      );
       setResults(res.data.results || []);
     } catch (err) {
       console.error("Search error:", err);
@@ -30,11 +34,25 @@ export default function MusicPage() {
     }
   };
 
-  const handleDownload = (videoId: string, title: string) => {
-    // call our backend download API
-    window.location.href = `/api/youtube/download?url=https://www.youtube.com/watch?v=${videoId}&filename=${encodeURIComponent(
-      title + ".mp3"
-    )}`;
+  const handleDownload = async (videoId: string) => {
+    try {
+      const videoUrl = `https://youtu.be/${videoId}`;
+      const res = await axios.get(
+        `https://api.giftedtech.co.ke/api/download/ytdlv2?apikey=gifted&url=${encodeURIComponent(
+          videoUrl
+        )}`
+      );
+
+      if (res.data?.result?.audio_url) {
+        // trigger browser download
+        window.open(res.data.result.audio_url, "_blank");
+      } else {
+        alert("No download link found.");
+      }
+    } catch (err) {
+      console.error("Download error:", err);
+      alert("Failed to download audio.");
+    }
   };
 
   return (
@@ -71,10 +89,14 @@ export default function MusicPage() {
               alt={video.title}
               className="rounded-lg mb-3"
             />
-            <h2 className="text-lg font-semibold mb-1 line-clamp-2">{video.title}</h2>
-            <p className="text-sm text-gray-400 mb-3">{video.duration}</p>
+            <h2 className="text-lg font-semibold mb-1 line-clamp-2">
+              {video.title}
+            </h2>
+            {video.duration && (
+              <p className="text-sm text-gray-400 mb-3">{video.duration}</p>
+            )}
             <button
-              onClick={() => handleDownload(video.videoId, video.title)}
+              onClick={() => handleDownload(video.videoId)}
               className="mt-auto px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700"
             >
               ⬇ Download MP3
