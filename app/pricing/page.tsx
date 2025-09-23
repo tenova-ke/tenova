@@ -4,7 +4,8 @@ import React from "react"; import Particles from "react-tsparticles"; import { l
 
 export default function SupportOpportunitiesPage() { const particlesInit = async (main) => { await loadFull(main); };
 
-const wa = (text) => https://wa.me/254758476795?text=${encodeURIComponent(text)};
+const wa = (text: string) =>
+  `https://wa.me/254758476795?text=${encodeURIComponent(text)}`;
 
 const ctas = { support: wa("Hi Tevona, I want to support Tevona. How can I help?"), submitAd: wa( "Hello Tevona, I want to submit an image/video banner for advertising. Please advise." ), applyLearner: wa("Hi Tevona, I want to apply as a learner at Tevona. Please guide me."), hireUs: wa("Hello Tevona team, I want to hire you for a website/project. Let's talk."), };
 
