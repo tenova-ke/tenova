@@ -1,7 +1,7 @@
 // @ts-nocheck
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 
 const YT_SEARCH_API = "https://api.siputzx.my.id/api/s/youtube?query=";
 const COMMUNITY_API = "https://api.siputzx.my.id/api/d/ytpost?url=";
@@ -64,6 +64,124 @@ function Card({ title, subtitle, thumbnail, children, actions }) {
   );
 }
 
+/* ---------- Modal / Player ---------- */
+function InlineModal({ open, onClose, type, embedUrl, videoUrl, title }) {
+  if (!open) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      onKeyDown={(e) => e.key === "Escape" && onClose()}
+      role="dialog"
+      aria-modal="true"
+    >
+      <div
+        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      <div className="relative max-w-4xl w-full bg-gray-900 rounded-2xl p-4 border border-white/10 shadow-2xl z-10">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <div className="font-bold text-lg text-white">{title}</div>
+            <div className="text-sm text-slate-400">Inline player — no redirects</div>
+          </div>
+          <div className="flex gap-2">
+            {videoUrl && (
+              <a
+                href={videoUrl}
+                download
+                className="inline-flex items-center px-3 py-2 rounded-xl bg-white/5 text-white font-semibold"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Download file
+              </a>
+            )}
+            <button onClick={onClose} className="px-3 py-2 rounded-xl bg-white/5 text-white">
+              Close
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-4">
+          {type === "embed" && embedUrl && (
+            <div className="w-full h-0" style={{ paddingBottom: "56.25%", position: "relative" }}>
+              <iframe
+                title="YouTube preview"
+                src={embedUrl}
+                allow="autoplay; encrypted-media"
+                allowFullScreen
+                style={{ position: "absolute", inset: 0, width: "100%", height: "100%", borderRadius: 12, border: "none" }}
+              />
+            </div>
+          )}
+
+          {type === "video" && videoUrl && (
+            <video
+              controls
+              src={videoUrl}
+              className="w-full rounded-lg"
+              style={{ maxHeight: "70vh" }}
+            />
+          )}
+
+          {!embedUrl && !videoUrl && (
+            <div className="text-slate-400 mt-4">No preview available</div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- Helper: find a usable url inside a response ---------- */
+async function extractUrlFromResponse(response) {
+  // If JSON, try many fields
+  try {
+    const json = await response.clone().json();
+    // common patterns
+    const candidates = [
+      json.url,
+      json.result?.url,
+      json.data?.url,
+      json.data?.download,
+      json.download,
+      json.result,
+      json.path,
+      json.file,
+      Array.isArray(json.files) ? json.files[0]?.url : undefined,
+    ];
+    for (const c of candidates) {
+      if (typeof c === "string" && c.startsWith("http")) return c;
+    }
+    // search recursively for first string that looks like an http link
+    const queue = [json];
+    while (queue.length) {
+      const node = queue.shift();
+      if (!node) continue;
+      if (typeof node === "string" && node.startsWith("http")) return node;
+      if (typeof node === "object") {
+        for (const k in node) {
+          queue.push(node[k]);
+        }
+      }
+    }
+  } catch (e) {
+    // not json or parse failed -> fallback to text
+  }
+
+  try {
+    const txt = await response.text();
+    // look for first http(s) link
+    const m = txt.match(/https?:\/\/[^\s'"]+/);
+    if (m) return m[0];
+  } catch (e) {
+    // ignore
+  }
+
+  return null;
+}
+
 /* ---------- Main page ---------- */
 export default function SongsPage() {
   const [query, setQuery] = useState("");
@@ -72,6 +190,14 @@ export default function SongsPage() {
   const [error, setError] = useState(null);
   const [debugLog, setDebugLog] = useState([]);
   const [community, setCommunity] = useState(null);
+
+  // modal/player states
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalType, setModalType] = useState(null); // 'embed' | 'video'
+  const [embedUrl, setEmbedUrl] = useState(null);
+  const [videoUrl, setVideoUrl] = useState(null);
+  const [modalTitle, setModalTitle] = useState("");
+  const [modalLoading, setModalLoading] = useState(false);
 
   useEffect(() => {
     doSearch("tevona");
@@ -92,19 +218,123 @@ export default function SongsPage() {
       const json = await res.json();
       setResults(json.data || []);
     } catch (err) {
-      setError("Search failed");
+      console.error(err);
+      setError("Search failed — check API or network");
     } finally {
       setLoading(false);
     }
   }
 
+  const openEmbed = useCallback((item) => {
+    const videoId = item.videoId || (item.url && item.url.match(/v=([^&]+)/)?.[1]);
+    if (videoId) {
+      setEmbedUrl(`https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`);
+      setModalType("embed");
+      setModalTitle(item.title || "YouTube preview");
+      setVideoUrl(null);
+      setModalOpen(true);
+      return;
+    }
+    // fallback: if item.url is already a direct playable link
+    if (item.url && (item.url.endsWith(".mp4") || item.url.includes("cdn"))) {
+      setVideoUrl(item.url);
+      setModalType("video");
+      setModalTitle(item.title || "Preview");
+      setEmbedUrl(null);
+      setModalOpen(true);
+      return;
+    }
+    setError("Cannot preview this item inline.");
+  }, []);
+
+  async function getDownloadLink(url) {
+    // Try local first
+    const tried = [];
+    async function tryFetch(urlToTry) {
+      tried.push(urlToTry);
+      try {
+        const r = await fetch(urlToTry, { method: "GET" });
+        if (!r) return null;
+        // if redirect to youtube or html page, extractUrlFromResponse will try to find links inside
+        const found = await extractUrlFromResponse(r);
+        if (found) return found;
+        // maybe the API returns a binary file (video stream) — create object URL
+        const contentType = r.headers.get("content-type") || "";
+        if (contentType.includes("video") || contentType.includes("mpeg")) {
+          const blob = await r.blob();
+          return URL.createObjectURL(blob);
+        }
+        return null;
+      } catch (e) {
+        console.warn("fetch failed for", urlToTry, e);
+        return null;
+      }
+    }
+
+    // 1) try local endpoint
+    const local = LOCAL_YTDOWN + encodeURIComponent(url);
+    const foundLocal = await tryFetch(local);
+    if (foundLocal) return { url: foundLocal, tried };
+
+    // 2) try each fallback
+    for (const b of FALLBACK_DOWNLOADS) {
+      const candidate = b(url);
+      const found = await tryFetch(candidate);
+      if (found) return { url: found, tried };
+    }
+
+    return { url: null, tried };
+  }
+
   async function onDownloadClick(item) {
     const url = item.url || (item.videoId ? `https://www.youtube.com/watch?v=${item.videoId}` : "");
     if (!url) return;
+    setModalLoading(true);
+    setError(null);
+    setModalTitle(item.title || "Preparing download...");
+    setEmbedUrl(null);
+    setVideoUrl(null);
+    setModalType(null);
+    setModalOpen(true);
+
     try {
-      window.open(url, "_blank");
-    } catch {
-      setError("Download failed");
+      logDebug(`Attempting download for ${url}`);
+      const { url: dl, tried } = await getDownloadLink(url);
+      if (!dl) {
+        logDebug(`No downloadable link found. Tried: ${tried.join(", ")}`);
+        setError("Download failed — no direct download found. See debug log.");
+        setModalLoading(false);
+        return;
+      }
+
+      // If the found link is an embed from youtube (watch?v=...), convert to raw mp4 if possible
+      const usable = dl.includes("youtube.com/watch") && dl.includes("v=")
+        ? dl.replace("/watch?v=", "/embed/") // last resort (still embed)
+        : dl;
+
+      // If the link looks like an mp4 or blob URL -> play as video
+      if (usable.endsWith(".mp4") || usable.includes(".mp4") || usable.startsWith("blob:") || usable.includes("cdn")) {
+        setVideoUrl(usable);
+        setModalType("video");
+        setModalTitle(item.title || "Downloaded video");
+      } else if (usable.includes("youtube.com/embed") || usable.includes("youtube-nocookie.com/embed")) {
+        setEmbedUrl(usable);
+        setModalType("embed");
+        setModalTitle(item.title || "Preview");
+      } else if (usable.startsWith("http")) {
+        // unknown file type but likely downloadable: try as video
+        setVideoUrl(usable);
+        setModalType("video");
+        setModalTitle(item.title || "Downloaded video");
+      } else {
+        setError("Download returned a non-playable response.");
+      }
+
+      setModalLoading(false);
+    } catch (err) {
+      console.error(err);
+      setError("Download failed — server or network error.");
+      setModalLoading(false);
     }
   }
 
@@ -153,7 +383,7 @@ export default function SongsPage() {
             </div>
           )}
 
-          {error && <div className="text-red-400">{error}</div>}
+          {error && <div className="text-red-400 mb-2">{error}</div>}
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {results.map((r, i) => {
@@ -169,7 +399,7 @@ export default function SongsPage() {
                     thumbnail={thumb}
                     actions={
                       <>
-                        <Button variant="ghost" onClick={() => window.open(url, "_blank")}>Open</Button>
+                        <Button variant="ghost" onClick={() => openEmbed({ ...r, url })}>View</Button>
                         <Button onClick={() => onDownloadClick({ ...r, url })}>Download</Button>
                       </>
                     }
@@ -181,7 +411,26 @@ export default function SongsPage() {
             })}
           </div>
         </section>
+
+        {/* debug area (optional) */}
+        <details className="mt-6 bg-black/30 p-3 rounded-lg text-slate-400">
+          <summary className="cursor-pointer font-semibold">Debug log (click to expand)</summary>
+          <div className="mt-2">
+            {debugLog.map((d, idx) => (
+              <div key={idx} className="text-xs opacity-80">{d}</div>
+            ))}
+          </div>
+        </details>
       </section>
+
+      <InlineModal
+        open={modalOpen}
+        onClose={() => { setModalOpen(false); setEmbedUrl(null); setVideoUrl(null); setModalLoading(false); }}
+        type={modalType}
+        embedUrl={embedUrl}
+        videoUrl={videoUrl}
+        title={modalTitle}
+      />
 
       {/* Animations */}
       <style jsx>{`
@@ -202,4 +451,4 @@ export default function SongsPage() {
       `}</style>
     </main>
   );
-    }
+  }
