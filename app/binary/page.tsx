@@ -26,7 +26,7 @@ export default function BinaryToolPage() {
           ? "ebinary"
           : "dbinary";
 
-      const url = `https://api.giftedtech.web.id/api/tools/${endpoint}?apikey=gifted_api_jsgt5su7s&query=${encodeURIComponent(
+      const url = `https://api.giftedtech.web.id/api/tools/${endpoint}?apikey=gifted&query=${encodeURIComponent(
         input
       )}`;
 
