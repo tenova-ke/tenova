@@ -22,7 +22,7 @@ export default function Base64ToolPage() {
 
     try {
       const endpoint = mode === "encode" ? "ebase" : "dbase";
-      const url = `https://api.giftedtech.web.id/api/tools/${endpoint}?apikey=gifted_api_jsgt5su7s&query=${encodeURIComponent(
+      const url = `https://api.giftedtech.web.id/api/tools/${endpoint}?apikey=gifted&query=${encodeURIComponent(
         input
       )}`;
 
