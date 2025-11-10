@@ -50,7 +50,7 @@ export default function YoutubePage(): JSX.Element {
     setResults([]);
     setLoadingSearch(true);
     try {
-      const apikey = "gifted_api_jsgt5su7s";
+      const apikey = "gifted";
       const url = `https://api.giftedtech.web.id/api/search/yts?apikey=${apikey}&query=${encodeURIComponent(q)}`;
       const res = await fetch(url, { cache: "no-store" });
       const json = await res.json();
